@@ -1,0 +1,62 @@
+{
+  "permissions": {
+    "deny": [
+      "Bash(git commit*)",
+      "Bash(git push*)",
+      "Bash(git merge*)",
+      "Bash(git rebase*)",
+      "Bash(git reset*)",
+      "Bash(git clean*)",
+      "Bash(git checkout*)",
+      "Bash(git restore*)",
+      "Bash(git cherry-pick*)",
+      "Bash(git revert*)",
+      "Bash(git stash drop*)",
+      "Bash(git stash clear*)",
+      "Bash(git stash pop*)",
+      "Bash(git add*)",
+      "Bash(git rm*)",
+      "Bash(git mv*)",
+      "Bash(git pull*)",
+      "Bash(git filter-branch*)",
+      "Bash(git filter-repo*)",
+      "Bash(git gc*)",
+      "Bash(git prune*)",
+      "Bash(git branch -d*)",
+      "Bash(git branch -D*)",
+      "Bash(git tag -d*)",
+      "Bash(git tag --delete*)",
+      "Bash(git remote add*)",
+      "Bash(git remote remove*)",
+      "Bash(git remote rm*)",
+      "Bash(git remote set-url*)",
+      "Bash(git submodule update*)",
+      "Bash(git submodule add*)",
+      "Bash(git submodule deinit*)",
+      "Bash(git apply*)",
+      "Bash(git am*)",
+      "Bash(git worktree add*)",
+      "Bash(git worktree remove*)",
+      "Bash(git update-ref*)",
+      "Bash(git symbolic-ref*)",
+      "Bash(git fetch --prune*)",
+      "Bash(git fetch -p*)",
+      "Bash(git fetch --force*)",
+      "Bash(git fetch -f*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR:-$PWD}/.claude/hooks/block-destructive-git.sh\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
