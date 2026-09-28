@@ -5,7 +5,7 @@ A personal, single-user recipe manager: import recipes from the web, browse them
 ## Language
 
 **Recipe**:
-A single dish's record: title, servings, timing, an ordered list of Ingredient Lines, an ordered list of Steps, and (if imported) a Source.
+A single dish's record: title, servings, timing, an ordered list of Ingredient Lines, an ordered list of Steps, an optional image, and (if imported) a Source.
 _Avoid_: Dish (a Recipe describes how to make a dish, it isn't the dish itself)
 
 **Ingredient Line**:
@@ -29,7 +29,7 @@ Fetching a page at a URL, parsing its embedded schema.org/Recipe structured data
 _Avoid_: Scrape, Ingest
 
 **Library**:
-The full set of a user's saved Recipes — what the searchable/filterable list screen shows.
+The full set of a user's saved Recipes — what the searchable list screen shows.
 _Avoid_: Collection, Catalog
 
 **Cook View**:

@@ -37,10 +37,13 @@ A resolved architecture + tooling + V1-feature spec (`spec.md`) for RecipeJoe, c
 - [OpenAPI + TS client generator](issues/02-openapi-ts-client-generator.md): built-in .NET OpenAPI at build time → openapi-typescript + openapi-fetch + openapi-react-query; CI regenerates and diffs.
 - [Schema.org Recipe variants](issues/01-schema-org-recipe-variants.md): JSON-LD only; parser written by hand on System.Text.Json + AngleSharp as a pure, fixture-tested seam; failed-Import criteria defined.
 - [Hook, lefthook and just mechanics](issues/03-hook-lefthook-just-mechanics.md): how each layer works, with measured formatter speeds and config sketches; the open choices went to Local automation choices.
+- [docker-compose topology](issues/05-docker-compose-topology.md): compose runs only Postgres in dev (apps on host); `profile: app` adds backend, nginx web (SPA + `/api` proxy) and a fixtures site for E2E; fresh DB per E2E run; loopback ports; `.env` (gitignored) + `.env.example`; just recipes per environment.
+- [Recipe image storage](issues/06-recipe-image-storage.md): `bytea` in a 1:1 `RecipeImages` table; first candidate only, ≤5 MB, jpeg/png/webp/gif by magic bytes, no resizing; failed download → save without image; served at `GET /api/recipes/{id}/image`, immutable caching.
+- [Search implementation](issues/07-search-implementation.md): server-side `ILIKE` over the title + Ingredient Lines, whitespace tokens ANDed, case-insensitive, newest first, summary DTO, 250 ms debounce with `?q=` in the URL.
+- [V1 screens](issues/09-v1-screens.md): prototype variant A. List Library with sticky search and ⋮ Delete, Import in a Dialog (inline error, then opens the Cook View), single-scroll Cook View with Wake Lock always on. No tick-off or step mode.
 
 ## Not yet specified
 
-- Frontend folder structure / module seams.
 - Seed / demo data for local dev and E2E.
 
 ## Out of scope
