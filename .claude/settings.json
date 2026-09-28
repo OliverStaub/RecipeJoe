@@ -1,7 +1,15 @@
 {
   "permissions": {
-    "deny": [
+    "allow": [
+      "Bash(git add*)",
       "Bash(git commit*)",
+      "Bash(git switch -c research/*)",
+      "Bash(git worktree*)",
+      "Bash(git branch -d worktree-agent-*)",
+      "Bash(git branch -D worktree-agent-*)",
+      "Bash(bash .claude/hooks/test-block-destructive-git.sh)"
+    ],
+    "deny": [
       "Bash(git push*)",
       "Bash(git merge*)",
       "Bash(git rebase*)",
@@ -14,7 +22,6 @@
       "Bash(git stash drop*)",
       "Bash(git stash clear*)",
       "Bash(git stash pop*)",
-      "Bash(git add*)",
       "Bash(git rm*)",
       "Bash(git mv*)",
       "Bash(git pull*)",
@@ -22,8 +29,6 @@
       "Bash(git filter-repo*)",
       "Bash(git gc*)",
       "Bash(git prune*)",
-      "Bash(git branch -d*)",
-      "Bash(git branch -D*)",
       "Bash(git tag -d*)",
       "Bash(git tag --delete*)",
       "Bash(git remote add*)",
@@ -35,8 +40,6 @@
       "Bash(git submodule deinit*)",
       "Bash(git apply*)",
       "Bash(git am*)",
-      "Bash(git worktree add*)",
-      "Bash(git worktree remove*)",
       "Bash(git update-ref*)",
       "Bash(git symbolic-ref*)",
       "Bash(git fetch --prune*)",
