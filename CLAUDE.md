@@ -12,4 +12,4 @@ Issues/specs live as markdown files under `.scratch/<feature>/`. See `docs/agent
 
 ### Domain docs
 
-Multi-context: root `CONTEXT-MAP.md` points to per-context `CONTEXT.md` files. See `docs/agents/domain.md`.
+Single context: root `CONTEXT.md` is the glossary. See `docs/agents/domain.md`.
