@@ -17,7 +17,7 @@ One instruction in a Recipe's ordered cooking procedure.
 _Avoid_: Instruction (reserve for the Recipe's instruction list as a whole, if ever named)
 
 **Servings**:
-The quantity a Recipe produces, e.g. "4 servings".
+How much a Recipe makes, as authored — free text (e.g. "4 Portionen", "12 cookies", "2 potpies (8 servings each)"). Not a number in V1.
 _Avoid_: Yield (schema.org's term; Servings is what a cook actually thinks in)
 
 **Source**:
