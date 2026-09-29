@@ -6,16 +6,16 @@
 
 **Blocked by:** 09 (Import a plain Recipe via the API)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Library header: "Rezepte" + "Importieren" button
-- [ ] `import` feature: `useImportRecipe()` invalidates the Library; components never import `$api`
-- [ ] Import `Dialog` with a URL input and a button
+- [x] Library header: "Rezepte" + "Importieren" button
+- [x] `import` feature: `useImportRecipe()` invalidates the Library; components never import `$api`
+- [x] Import `Dialog` with a URL input and a button
   - loading: inputs disabled, spinner, "Wird importiert…", dialog can't be closed
   - failure: destructive `Alert` "Import fehlgeschlagen" + the kind's message, cleared when the URL is edited
   - success: dialog closes, toast "Rezept importiert", navigation to `/recipes/:id`
-- [ ] Exhaustive `switch` mapping all 7 `ImportFailure` kinds to the German messages in §2.5
-- [ ] `cook-view` feature: `useRecipe(id)`; the route shows the title, a "Zutaten" list and a "Zubereitung" `ol` with `whitespace-pre-line`; back link to the Library
-- [ ] Vitest + MSW: failure mapping; dialog loading, error, cleared on edit, and navigation on success
-- [ ] A tokenised template page in `/fixtures/e2e/`
-- [ ] E2E: Import → the Cook View shows the tokenised title; one `NoRecipe` Import shows its message
+- [x] Exhaustive `switch` mapping all 7 `ImportFailure` kinds to the German messages in §2.5
+- [x] `cook-view` feature: `useRecipe(id)`; the route shows the title, a "Zutaten" list and a "Zubereitung" `ol` with `whitespace-pre-line`; back link to the Library
+- [x] Vitest + MSW: failure mapping; dialog loading, error, cleared on edit, and navigation on success
+- [x] A tokenised template page in `/fixtures/e2e/`
+- [x] E2E: Import → the Cook View shows the tokenised title; one `NoRecipe` Import shows its message
