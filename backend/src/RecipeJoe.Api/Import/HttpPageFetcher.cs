@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Sockets;
+using System.Text;
 using Microsoft.Extensions.Options;
 
 namespace RecipeJoe.Api.Import;
@@ -22,6 +23,7 @@ internal sealed class HttpPageFetcher(HttpClient client, IOptions<ImportOptions>
         new()
         {
             AllowAutoRedirect = false,
+            UseProxy = false, // the connect callback must see the target's IP, not a proxy's
             AutomaticDecompression = DecompressionMethods.All,
             ConnectCallback = (context, ct) => ConnectGuarded(options, context, ct),
         };
@@ -97,12 +99,15 @@ internal sealed class HttpPageFetcher(HttpClient client, IOptions<ImportOptions>
                 return Fail(ImportFailure.Blocked);
             case 404 or 410:
                 return Fail(ImportFailure.NotFound);
+            case 503 when await IsChallengePageAsync(response, ct):
+                return Fail(ImportFailure.Blocked);
             case < 200 or >= 300:
                 return Fail(ImportFailure.BadResponse);
         }
 
-        var mediaType = response.Content.Headers.ContentType?.MediaType;
-        if (mediaType is null || !HtmlMediaTypes.Contains(mediaType, StringComparer.OrdinalIgnoreCase))
+        var contentType = response.Content.Headers.ContentType;
+        var mediaType = contentType?.MediaType;
+        if (contentType is null || mediaType is null || !HtmlMediaTypes.Contains(mediaType, StringComparer.OrdinalIgnoreCase))
         {
             return Fail(ImportFailure.BadResponse);
         }
@@ -120,7 +125,7 @@ internal sealed class HttpPageFetcher(HttpClient client, IOptions<ImportOptions>
 
         return ContainsChallengeMarker(bytes)
             ? Fail(ImportFailure.Blocked)
-            : Result<FetchedContent, ImportFailure>.Ok(new FetchedContent(bytes, response.Content.Headers.ContentType!.ToString()));
+            : Result<FetchedContent, ImportFailure>.Ok(new FetchedContent(bytes, contentType.ToString()));
     }
 
     /// <summary>Streams the body; null when it exceeds the cap (Content-Length can be absent or a lie).</summary>
@@ -143,13 +148,16 @@ internal sealed class HttpPageFetcher(HttpClient client, IOptions<ImportOptions>
         return buffer.ToArray();
     }
 
+    private async Task<bool> IsChallengePageAsync(HttpResponseMessage response, CancellationToken ct) =>
+        await ReadCappedAsync(response.Content, ct) is { } body && ContainsChallengeMarker(body);
+
     private static bool IsChallenge(HttpResponseMessage response) =>
         response.Headers.TryGetValues("cf-mitigated", out var values)
         && values.Contains("challenge", StringComparer.OrdinalIgnoreCase);
 
     /// <summary>Cloudflare's interstitial is titled "Just a moment..."; it may come with a 200 or 503.</summary>
     private static bool ContainsChallengeMarker(byte[] html) =>
-        System.Text.Encoding.UTF8.GetString(html, 0, Math.Min(html.Length, 4096))
+        Encoding.UTF8.GetString(html, 0, Math.Min(html.Length, 4096))
             .Contains("<title>Just a moment", StringComparison.OrdinalIgnoreCase);
 
     private static bool IsRedirect(HttpStatusCode status) =>

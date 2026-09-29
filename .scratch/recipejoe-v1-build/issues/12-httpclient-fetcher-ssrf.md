@@ -6,17 +6,17 @@
 
 **Blocked by:** 09 (Import a plain Recipe via the API)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] HttpClient `IPageFetcher` adapter registered in prod: Chrome UA, `Accept`, `Accept-Language: de-DE,de;q=0.9,en;q=0.8`, gzip/br
-- [ ] 10 s total timeout, 5 MB streamed cap; manual redirects (max 5, http/https only); no retries
-- [ ] The page must be `text/html` or `application/xhtml+xml`; charset from the header, else from the meta tag
-- [ ] Failure mapping:
+- [x] HttpClient `IPageFetcher` adapter registered in prod: Chrome UA, `Accept`, `Accept-Language: de-DE,de;q=0.9,en;q=0.8`, gzip/br
+- [x] 10 s total timeout, 5 MB streamed cap; manual redirects (max 5, http/https only); no retries
+- [x] The page must be `text/html` or `application/xhtml+xml`; charset from the header, else from the meta tag
+- [x] Failure mapping:
   - 401/402/403/429 and challenge pages → `Blocked`
   - 404/410 → `NotFound`
   - other non-2xx, not HTML, too large, too many redirects → `BadResponse`
   - DNS, connection or timeout failure → `Unreachable`
-- [ ] SSRF guard in `ConnectCallback` on the connected IP; pure `IsPublic(IPAddress)` per §2.5 → `ForbiddenAddress`
-- [ ] `Import:AllowedHosts` bypass, with `localhost` in the Development settings
-- [ ] Unit: `IsPublic` table tests
-- [ ] Integration: WireMock.Net on loopback (status mapping, redirects, caps, timeouts); loopback without the allowlist → `ForbiddenAddress`
+- [x] SSRF guard in `ConnectCallback` on the connected IP; pure `IsPublic(IPAddress)` per §2.5 → `ForbiddenAddress`
+- [x] `Import:AllowedHosts` bypass, with `localhost` in the Development settings
+- [x] Unit: `IsPublic` table tests
+- [x] Integration: WireMock.Net on loopback (status mapping, redirects, caps, timeouts); loopback without the allowlist → `ForbiddenAddress`

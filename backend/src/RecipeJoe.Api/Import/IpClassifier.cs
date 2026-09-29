@@ -42,5 +42,16 @@ internal static class IpClassifier
             || address.IsIPv6LinkLocal
             || address.IsIPv6UniqueLocal
             || address.IsIPv6Multicast
+            || address.IsIPv6SiteLocal
+            || HasEmbeddedIpv4Prefix(address) // NAT64, 6to4: could smuggle a private IPv4
         );
+
+    private static bool HasEmbeddedIpv4Prefix(IPAddress address)
+    {
+        Span<byte> b = stackalloc byte[16];
+        address.TryWriteBytes(b, out _);
+        var nat64 = b[..12].SequenceEqual(new byte[] { 0, 0x64, 0xff, 0x9b, 0, 0, 0, 0, 0, 0, 0, 0 });
+        var sixToFour = b[0] == 0x20 && b[1] == 0x02;
+        return nat64 || sixToFour;
+    }
 }

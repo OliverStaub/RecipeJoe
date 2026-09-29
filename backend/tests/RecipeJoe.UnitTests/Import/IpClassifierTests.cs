@@ -38,6 +38,9 @@ public sealed class IpClassifierTests
     [DataRow("fd12:3456::1")]
     [DataRow("fe80::1")]
     [DataRow("ff02::1")]
+    [DataRow("fec0::1")]
+    [DataRow("64:ff9b::7f00:1")]
+    [DataRow("2002:7f00:1::1")]
     [DataRow("::ffff:127.0.0.1")]
     [DataRow("::ffff:169.254.169.254")]
     public void Non_public_addresses_are_rejected(string address) =>

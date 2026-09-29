@@ -116,6 +116,20 @@ public sealed class HttpPageFetcherTests
     }
 
     [TestMethod]
+    public async Task Just_a_moment_page_with_503_is_blocked()
+    {
+        Respond(
+            "/page",
+            Response.Create()
+                .WithStatusCode(503)
+                .WithHeader("Content-Type", "text/html")
+                .WithBody("<html><head><title>Just a moment...</title></head></html>")
+        );
+
+        Assert.AreEqual(ImportFailure.Blocked, (await AllowLoopback().FetchAsync(Url(), CancellationToken.None)).Failure);
+    }
+
+    [TestMethod]
     public async Task Non_html_is_a_bad_response()
     {
         Respond("/page", Response.Create().WithHeader("Content-Type", "application/json").WithBody("{}"));
