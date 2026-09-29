@@ -100,3 +100,33 @@ it('does not reset the input while a typed query is still being mirrored', () =>
   expect(result.current.search.input).toBe('kuchen');
   expect(result.current.location.search).toBe('?q=kuchen');
 });
+
+it('trims a padded ?q= when seeding and when following navigation', () => {
+  const { result } = setup('/?q=%20suppe%20');
+  expect(result.current.search.q).toBe('suppe');
+
+  act(() => result.current.navigate('/?q=%20kuchen%20'));
+  expect(result.current.search.q).toBe('kuchen');
+});
+
+it('replaces the history entry instead of pushing one', () => {
+  const wrapper = ({ children }: { children: ReactNode }) => (
+    <MemoryRouter initialEntries={['/about', '/']} initialIndex={1}>
+      {children}
+    </MemoryRouter>
+  );
+  const { result } = renderHook(
+    () => ({
+      search: useLibrarySearch(),
+      location: useLocation(),
+      navigate: useNavigate(),
+    }),
+    { wrapper },
+  );
+
+  act(() => result.current.search.setInput('suppe'));
+  act(() => vi.advanceTimersByTime(250));
+  act(() => result.current.navigate(-1));
+
+  expect(result.current.location.pathname).toBe('/about');
+});

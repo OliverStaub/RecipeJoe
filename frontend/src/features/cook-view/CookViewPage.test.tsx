@@ -141,3 +141,17 @@ describe('Wake Lock badge', () => {
     ).toBeInTheDocument();
   });
 });
+
+it('requests the Recipe by its id', async () => {
+  const ids: unknown[] = [];
+  server.use(
+    http.get('/api/recipes/{id}', ({ params, response }) => {
+      ids.push(params.id);
+      return response(200).json(recipe);
+    }),
+  );
+  renderApp('/recipes/7');
+
+  await screen.findByRole('heading', { name: 'Kartoffelsuppe' });
+  expect(ids).toEqual(['7']);
+});

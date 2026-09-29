@@ -119,3 +119,54 @@ it('keeps the dialog open and says so when the delete fails', async () => {
   ).toBeInTheDocument();
   expect(screen.getByRole('alertdialog')).toBeInTheDocument();
 });
+
+it('closes the confirmation in the Cook View when cancelled, and can be reopened', async () => {
+  const { deleted } = serveLibrary();
+  const user = userEvent.setup();
+  renderApp('/recipes/7');
+  await screen.findByRole('heading', { name: 'Kartoffelsuppe' });
+  await user.click(screen.getByRole('button', { name: 'Mehr' }));
+  await user.click(await screen.findByRole('menuitem', { name: 'Löschen' }));
+
+  await user.click(
+    within(await confirmDialog()).getByRole('button', { name: 'Abbrechen' }),
+  );
+  await waitFor(() =>
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument(),
+  );
+
+  expect(deleted).toEqual([]);
+  await user.click(screen.getByRole('button', { name: 'Mehr' }));
+  await user.click(await screen.findByRole('menuitem', { name: 'Löschen' }));
+  expect(await confirmDialog()).toBeInTheDocument();
+});
+
+it('forgets a failed delete when the dialog is cancelled and reopened', async () => {
+  serveLibrary();
+  server.use(
+    http.delete('/api/recipes/{id}', ({ response }) =>
+      response.untyped(HttpResponse.json({}, { status: 500 })),
+    ),
+  );
+  const user = userEvent.setup();
+  renderApp();
+  await screen.findByRole('link', { name: /Kartoffelsuppe/ });
+  await user.click(screen.getByRole('button', { name: 'Mehr' }));
+  await user.click(await screen.findByRole('menuitem', { name: 'Löschen' }));
+  await user.click(
+    within(await confirmDialog()).getByRole('button', { name: 'Löschen' }),
+  );
+  await screen.findByText('Rezept konnte nicht gelöscht werden.');
+  await user.click(screen.getByRole('button', { name: 'Abbrechen' }));
+  await waitFor(() =>
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument(),
+  );
+
+  await user.click(screen.getByRole('button', { name: 'Mehr' }));
+  await user.click(await screen.findByRole('menuitem', { name: 'Löschen' }));
+
+  await confirmDialog();
+  expect(
+    screen.queryByText('Rezept konnte nicht gelöscht werden.'),
+  ).not.toBeInTheDocument();
+});

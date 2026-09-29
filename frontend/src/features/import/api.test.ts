@@ -14,3 +14,7 @@ it.each([{ kind: 'Brandneu' }, { title: 'validation' }, undefined])(
     expect(toImportFailure(error)).toBe('BadResponse');
   },
 );
+
+it('maps null to BadResponse', () => {
+  expect(toImportFailure(null)).toBe('BadResponse');
+});
