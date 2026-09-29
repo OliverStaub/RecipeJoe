@@ -56,7 +56,7 @@ internal static partial class RecipeParser
         }
 
         var title = Text(node, "name");
-        var lines = ReadStrings(node, "recipeIngredient").Select(Normalise).Where(l => l.Length > 0).ToList();
+        var lines = ReadStrings(node, "recipeIngredient").Select(l => Normalise(l)).Where(l => l.Length > 0).ToList();
         var steps = ReadSteps(node).ToList();
 
         if (title is null || (lines.Count == 0 && steps.Count == 0))
@@ -107,7 +107,7 @@ internal static partial class RecipeParser
         {
             // HowToStep `name` is dropped; it is only a fallback when `text` is missing.
             var raw = item.ValueKind == JsonValueKind.String ? item.GetString() : Text(item, "text") ?? Text(item, "name");
-            var step = Normalise(raw ?? string.Empty);
+            var step = Normalise(raw ?? string.Empty, keepNewlines: true);
             if (step.Length > 0)
             {
                 yield return step;
@@ -151,9 +151,24 @@ internal static partial class RecipeParser
         }
     }
 
-    private static string Normalise(string text) =>
-        Whitespace().Replace(WebUtility.HtmlDecode(text), " ").Trim();
+    // Steps keep their newlines (\r\n → \n, 3+ newlines → 2); everything else is a single line.
+    private static string Normalise(string text, bool keepNewlines = false)
+    {
+        var decoded = WebUtility.HtmlDecode(text).Replace("\r\n", "\n", StringComparison.Ordinal);
+        if (!keepNewlines)
+        {
+            return Whitespace().Replace(decoded, " ").Trim();
+        }
+
+        return ExcessNewlines().Replace(HorizontalWhitespace().Replace(decoded, " "), "\n\n").Trim();
+    }
 
     [GeneratedRegex(@"\s+")]
     private static partial Regex Whitespace();
+
+    [GeneratedRegex(@"[^\S\n]+")]
+    private static partial Regex HorizontalWhitespace();
+
+    [GeneratedRegex(@"\n{3,}")]
+    private static partial Regex ExcessNewlines();
 }

@@ -90,6 +90,14 @@ public sealed class RecipeParserTests
     }
 
     [TestMethod]
+    public void Keeps_newlines_inside_a_step()
+    {
+        var html = Page("""{"@type":"Recipe","name":"X","recipeInstructions":["Erst rühren.\n\n\n\nDann backen."]}""");
+
+        Assert.AreEqual("Erst rühren.\n\nDann backen.", RecipeParser.Parse(html, PageUrl).Value.Steps.Single());
+    }
+
+    [TestMethod]
     [DataRow("<html><body>Kein Rezept</body></html>", DisplayName = "no ld+json")]
     [DataRow("""<script type="application/ld+json">{"@type":"Article","name":"X"}</script>""", DisplayName = "no Recipe node")]
     [DataRow("""<script type="application/ld+json">{"@type":"Recipe","recipeIngredient":["a"]}</script>""", DisplayName = "no name")]
