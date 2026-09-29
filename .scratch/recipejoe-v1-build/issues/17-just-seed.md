@@ -6,10 +6,10 @@
 
 **Blocked by:** 11 (Parser covers all schema.org variants), 12 (HttpClient fetcher + SSRF guard), 13 (Recipe images)
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] `just seed` (bash + curl + jq); dev only, never run automatically
-- [ ] `GET /api/recipes`; if the Library is not empty, exit with a message
-- [ ] `POST /api/recipes/import` for every `recipes/` page except `failing/`, with `url=http://localhost:8081/recipes/<name>.html`
-- [ ] One ✓/✗ line per page, with the kind; non-zero exit on any failure
-- [ ] With the API running, `just reset && just dev-db && just seed` yields 30 Recipes, with images where expected
+- [x] `just seed` (bash + curl + jq); dev only, never run automatically
+- [x] `GET /api/recipes`; if the Library is not empty, exit with a message
+- [x] `POST /api/recipes/import` for every `recipes/` page except `failing/`, with `url=http://localhost:8081/recipes/<name>.html`
+- [x] One ✓/✗ line per page, with the kind; non-zero exit on any failure
+- [x] With the API running, `just reset && just dev-db && just seed` yields 30 Recipes, with images where expected

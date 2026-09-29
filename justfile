@@ -41,9 +41,9 @@ dev-api *args:
 dev-web *args:
     npm run dev -- "$@"
 
-# Fill the dev database with the fixture recipes (ticket 17).
+# Import every fixture recipe into an empty dev Library (needs dev-db and dev-api).
 seed:
-    @echo "seed: not implemented yet (ticket 17)" >&2; exit 1
+    scripts/seed.sh
 
 # --- full stack --------------------------------------------------------------
 
