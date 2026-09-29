@@ -1,12 +1,12 @@
 import { randomUUID } from 'node:crypto';
 import { expect, test } from '@playwright/test';
 
-// fixme until ticket 12 replaces UnavailablePageFetcher with the HttpClient fetcher;
-// against it the backend answers Unreachable for every URL.
 // The backend reaches the fixtures site as http://fixtures (Import__AllowedHosts).
 const fixtureUrl = (page: string, token: string) =>
   `http://fixtures/e2e/${page}?t=${token}`;
 
+// fixme: 'Bildschirm bleibt an' never appears in Chromium/Pixel (Wake Lock request presumably
+// rejected over plain http in headless); passes on WebKit. Needs its own look.
 test.fixme('Import opens the Cook View with the tokenised title', async ({
   page,
 }) => {
@@ -39,9 +39,7 @@ test.fixme('Import opens the Cook View with the tokenised title', async ({
     .toBeGreaterThan(0);
 });
 
-test.fixme('a page without a Recipe shows its message inline', async ({
-  page,
-}) => {
+test('a page without a Recipe shows its message inline', async ({ page }) => {
   await page.goto('/');
 
   await page.getByRole('button', { name: 'Importieren' }).click();

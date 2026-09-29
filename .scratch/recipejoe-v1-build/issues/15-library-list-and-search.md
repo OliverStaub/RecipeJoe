@@ -6,15 +6,15 @@
 
 **Blocked by:** 13 (Recipe images)
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] `GET /api/recipes?q=` → `RecipeSummary[]` `{ id, title, sourceUrl, hasImage }`, ordered by `CreatedAt` desc; an empty or missing `q` returns the whole Library
-- [ ] Search: whitespace tokens ANDed; each token `ILIKE` on the title OR any Ingredient Line (`EXISTS`); `%`, `_`, `\` escaped
-- [ ] Integration: title hit, Line hit, split tokens, case, no match, `%`/`_` literal, order
-- [ ] `useRecipes(q)` with `keepPreviousData`
-- [ ] `useLibrarySearch()`: 250 ms debounce, trim, mirror to `?q=` with `replace`, seed from `?q=`
-- [ ] Sticky search `Input` with an icon and "Rezepte durchsuchen…"
-- [ ] Rows: 56 px thumbnail (`ChefHat` placeholder) + title + Source host
-- [ ] Empty state "Importiere dein erstes Rezept" with a link to Import; no hits: "Keine Rezepte zu „{q}""
-- [ ] Vitest: `useLibrarySearch` with fake timers; Library empty, no hits and list
-- [ ] E2E: search narrows the Library
+- [x] `GET /api/recipes?q=` → `RecipeSummary[]` `{ id, title, sourceUrl, hasImage }`, ordered by `CreatedAt` desc; an empty or missing `q` returns the whole Library
+- [x] Search: whitespace tokens ANDed; each token `ILIKE` on the title OR any Ingredient Line (`EXISTS`); `%`, `_`, `\` escaped
+- [x] Integration: title hit, Line hit, split tokens, case, no match, `%`/`_` literal, order
+- [x] `useRecipes(q)` with `keepPreviousData`
+- [x] `useLibrarySearch()`: 250 ms debounce, trim, mirror to `?q=` with `replace`, seed from `?q=`
+- [x] Sticky search `Input` with an icon and "Rezepte durchsuchen…"
+- [x] Rows: 56 px thumbnail (`ChefHat` placeholder) + title + Source host
+- [x] Empty state "Importiere dein erstes Rezept" with a link to Import; no hits: "Keine Rezepte zu „{q}""
+- [x] Vitest: `useLibrarySearch` with fake timers; Library empty, no hits and list
+- [x] E2E: search narrows the Library

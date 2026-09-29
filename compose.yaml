@@ -37,7 +37,7 @@ services:
       interval: 2s
       timeout: 3s
       retries: 15
-    # Reachable as http://fixtures from the backend container (Import__AllowedHosts=fixtures).
+    # Reachable as http://fixtures from the backend container (Import__AllowedHosts__0=fixtures).
     # Hostname only; the port stays 80 inside the compose network.
 
   backend:
@@ -46,7 +46,7 @@ services:
       context: ./backend
     environment:
       ConnectionStrings__Db: Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
-      Import__AllowedHosts: fixtures
+      Import__AllowedHosts__0: fixtures
     ports:
       - '127.0.0.1:${API_PORT:-5080}:8080'
     depends_on:

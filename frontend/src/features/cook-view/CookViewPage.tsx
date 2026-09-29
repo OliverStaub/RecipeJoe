@@ -9,6 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { sourceHost } from '@/lib/sourceHost';
 import { useRecipe } from './api';
 import { formatDuration } from './formatDuration';
 import { useWakeLock, type WakeLockStatus } from './useWakeLock';
@@ -18,14 +19,6 @@ const wakeLockLabel: Record<WakeLockStatus, string> = {
   released: 'Bildschirm kann sich sperren',
   unsupported: 'Bildschirmsperre nicht verfügbar',
 };
-
-function sourceHost(sourceUrl: string) {
-  try {
-    return new URL(sourceUrl).hostname;
-  } catch {
-    return sourceUrl;
-  }
-}
 
 export function CookViewPage() {
   const id = Number(useParams().id);
