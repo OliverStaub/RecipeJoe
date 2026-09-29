@@ -21,7 +21,7 @@ internal sealed class Importer(IPageFetcher fetcher, RecipeJoeDbContext db, Time
             return Result<Recipe, ImportFailure>.Fail(page.Failure);
         }
 
-        var parsed = RecipeParser.Parse(System.Text.Encoding.UTF8.GetString(page.Value.Bytes), pageUrl);
+        var parsed = RecipeParser.Parse(PageDecoder.Decode(page.Value), pageUrl);
         if (!parsed.IsSuccess)
         {
             return Result<Recipe, ImportFailure>.Fail(parsed.Failure);

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.Extensions.Options;
 using RecipeJoe.Api.Recipes;
 
 namespace RecipeJoe.Api.Import;
@@ -12,7 +13,12 @@ internal static class ImportEndpoints
 {
     public static IServiceCollection AddImport(this IServiceCollection services)
     {
-        services.AddSingleton<IPageFetcher, UnavailablePageFetcher>();
+        services.AddOptions<ImportOptions>().BindConfiguration("Import");
+        services
+            .AddHttpClient<IPageFetcher, HttpPageFetcher>(HttpPageFetcher.ConfigureClient)
+            .ConfigurePrimaryHttpMessageHandler(sp =>
+                HttpPageFetcher.CreateHandler(sp.GetRequiredService<IOptions<ImportOptions>>().Value)
+            );
         services.AddScoped<Importer>();
         return services;
     }
