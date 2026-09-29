@@ -1,0 +1,25 @@
+<Project>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <AnalysisMode>Recommended</AnalysisMode>
+
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+
+    <!-- Consumed via the coverage settings flag by `just cov backend` (see CodeCoverage.config). -->
+    <CoverageSettingsFile>$(MSBuildThisFileDirectory)CodeCoverage.config</CoverageSettingsFile>
+  </PropertyGroup>
+
+  <!-- Test method names use underscores for readability (e.g. Health_returns_ok_when_the_database_is_reachable). -->
+  <PropertyGroup Condition="$(MSBuildProjectName.EndsWith('Tests'))">
+    <NoWarn>$(NoWarn);CA1707</NoWarn>
+  </PropertyGroup>
+
+</Project>

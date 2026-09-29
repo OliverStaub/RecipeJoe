@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/RecipeJoe.Api/RecipeJoe.Api.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/RecipeJoe.ContractTests/RecipeJoe.ContractTests.csproj" />
+    <Project Path="tests/RecipeJoe.IntegrationTests/RecipeJoe.IntegrationTests.csproj" />
+    <Project Path="tests/RecipeJoe.UnitTests/RecipeJoe.UnitTests.csproj" />
+  </Folder>
+</Solution>
