@@ -43,27 +43,27 @@ check() {
   fi
 }
 
-ESL="frontend: --no-install eslint --fix --no-warn-ignored src/a.ts"
-PRE="frontend: --no-install prettier --write --ignore-unknown --log-level warn src/a.ts"
+# js_calls <package> <path within package>: the expected ESLint-then-Prettier calls.
+js_calls() {
+  echo "$1: --no-install eslint --fix --no-warn-ignored $2"
+  echo "$1: --no-install prettier --write --ignore-unknown --log-level warn $2"
+}
+JS_A=$(js_calls frontend src/a.ts)
 
 check "cs: whitespace format, relative include" 0 \
   "backend: dotnet format whitespace . --folder --include src/A.cs" "$R/backend/src/A.cs"
 check "cs: dotnet failure is silent" 0 \
   "backend: dotnet format whitespace . --folder --include src/A.cs" "$R/backend/src/A.cs" DOTNET_RC=1
-check "ts: eslint then prettier" 0 "$ESL"$'\n'"$PRE" "$R/frontend/src/a.ts"
-check "tsx handled" 0 \
-  "frontend: --no-install eslint --fix --no-warn-ignored src/b.tsx"$'\n'"frontend: --no-install prettier --write --ignore-unknown --log-level warn src/b.tsx" \
-  "$R/frontend/src/b.tsx"
-check "e2e ts uses e2e package" 0 \
-  "e2e: --no-install eslint --fix --no-warn-ignored tests/s.ts"$'\n'"e2e: --no-install prettier --write --ignore-unknown --log-level warn tests/s.ts" \
-  "$R/e2e/tests/s.ts"
-check "unfixable eslint: exit 2, prettier still runs" 2 "$ESL"$'\n'"$PRE" "$R/frontend/src/a.ts" ESLINT_RC=1
+check "ts: eslint then prettier" 0 "$JS_A" "$R/frontend/src/a.ts"
+check "tsx handled" 0 "$(js_calls frontend src/b.tsx)" "$R/frontend/src/b.tsx"
+check "e2e ts uses e2e package" 0 "$(js_calls e2e tests/s.ts)" "$R/e2e/tests/s.ts"
+check "unfixable eslint: exit 2, prettier still runs" 2 "$JS_A" "$R/frontend/src/a.ts" ESLINT_RC=1
 case $LAST_ERR in
   *"ESLint errors in frontend/src/a.ts"*"eslint says no"*) pass=$((pass + 1)) ;;
   *) fail=$((fail + 1)); echo "FAIL: stderr lacks eslint output: $LAST_ERR" ;;
 esac
-check "eslint tool failure (rc 2) is silent" 0 "$ESL"$'\n'"$PRE" "$R/frontend/src/a.ts" ESLINT_RC=2
-check "prettier failure is silent" 0 "$ESL"$'\n'"$PRE" "$R/frontend/src/a.ts" PRETTIER_RC=2
+check "eslint tool failure (rc 2) is silent" 0 "$JS_A" "$R/frontend/src/a.ts" ESLINT_RC=2
+check "prettier failure is silent" 0 "$JS_A" "$R/frontend/src/a.ts" PRETTIER_RC=2
 check "other extension ignored" 0 "" "$R/docs/x.md"
 check "missing file ignored" 0 "" "$R/frontend/src/nope.ts"
 check "outside a repo ignored" 0 "" "$tmp/bin/dotnet"

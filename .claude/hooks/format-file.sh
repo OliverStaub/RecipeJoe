@@ -18,11 +18,11 @@ case "$rel" in
   frontend/*.ts | frontend/*.tsx | frontend/*.js | frontend/*.jsx | frontend/*.mjs | frontend/*.cjs | \
     e2e/*.ts | e2e/*.tsx | e2e/*.js | e2e/*.jsx | e2e/*.mjs | e2e/*.cjs)
     pkg=${rel%%/*}
-    f=${rel#"$pkg"/}
+    pkg_rel=${rel#"$pkg"/}
     cd "$root/$pkg" || exit 0
-    out=$(npx --no-install eslint --fix --no-warn-ignored "$f" 2>&1)
+    out=$(npx --no-install eslint --fix --no-warn-ignored "$pkg_rel" 2>&1)
     rc=$?
-    npx --no-install prettier --write --ignore-unknown --log-level warn "$f" >/dev/null 2>&1
+    npx --no-install prettier --write --ignore-unknown --log-level warn "$pkg_rel" >/dev/null 2>&1
     if [[ $rc -eq 1 ]]; then
       printf 'ESLint errors in %s:\n%s\n' "$rel" "$out" >&2
       exit 2
