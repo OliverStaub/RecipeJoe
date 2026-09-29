@@ -8,6 +8,6 @@
 
 **Status:** ready-for-agent
 
-- [ ] `renovate.json`: `helpers:pinGitHubActionDigests`, weekly schedule, groups (`@types/*`, MSTest, …), `minimumReleaseAge: 3 days`
-- [ ] Automerge minor/patch/digest when green; majors as PRs; runner label bumps included
-- [ ] Config passes `renovate-config-validator`
+- [x] `renovate.json`: `helpers:pinGitHubActionDigests`, weekly schedule, groups (`@types/*`, MSTest, …), `minimumReleaseAge: 3 days`
+- [x] Automerge minor/patch/digest when green; majors as PRs; runner label bumps included
+- [x] Config passes `renovate-config-validator`

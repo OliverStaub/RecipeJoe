@@ -17,4 +17,4 @@
 - [ ] Coverage summary in the job summary; the build fails under 80 % lines (backend and frontend separately)
 - [ ] Artifacts only `if: failure()`, kept 7 days: Playwright report + traces, TRX/JUnit
 - [ ] Hardening: SHA-pinned Actions with a version comment, `permissions: contents: read`, `timeout-minutes` 10/15/20, `ubuntu-24.04`, SDKs from `global.json`/`.nvmrc`, `extractions/setup-just`
-- [ ] **Phase 1 exit:** a green run on `main` that exercises every layer
+- [x] **Phase 1 exit:** a green run on `main` that exercises every layer

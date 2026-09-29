@@ -1,0 +1,55 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", "helpers:pinGitHubActionDigests"],
+  "schedule": ["before 6am on monday"],
+  "timezone": "Europe/Zurich",
+  "minimumReleaseAge": "3 days",
+  "prConcurrentLimit": 5,
+  "packageRules": [
+    {
+      "description": "Automerge non-major bumps once CI is green; majors stay as PRs",
+      "matchUpdateTypes": ["minor", "patch", "digest", "pin", "pinDigest"],
+      "automerge": true
+    },
+    {
+      "description": "Runner label bumps (ubuntu-24.04 -> next) are reviewed, not automerged",
+      "matchDatasources": ["github-runners"],
+      "automerge": false
+    },
+    {
+      "groupName": "@types",
+      "matchPackageNames": ["@types/*"]
+    },
+    {
+      "groupName": "MSTest",
+      "matchPackageNames": ["MSTest", "MSTest.*", "Microsoft.Testing.*"]
+    },
+    {
+      "groupName": "EF Core / ASP.NET Core",
+      "matchPackageNames": [
+        "Microsoft.EntityFrameworkCore*",
+        "Microsoft.AspNetCore.*",
+        "Microsoft.Extensions.*",
+        "Npgsql.EntityFrameworkCore.PostgreSQL",
+        "dotnet-ef"
+      ]
+    },
+    {
+      "groupName": "Playwright",
+      "matchPackageNames": ["@playwright/test", "playwright", "playwright-core"]
+    },
+    {
+      "groupName": "Vitest",
+      "matchPackageNames": ["vitest", "@vitest/*"]
+    },
+    {
+      "groupName": "ESLint",
+      "matchPackageNames": [
+        "eslint",
+        "@eslint/*",
+        "typescript-eslint",
+        "eslint-*"
+      ]
+    }
+  ]
+}
