@@ -1,6 +1,6 @@
 import { act, renderHook } from '@testing-library/react';
 import type { ReactNode } from 'react';
-import { MemoryRouter, useLocation } from 'react-router-dom';
+import { MemoryRouter, useLocation, useNavigate } from 'react-router-dom';
 import { useLibrarySearch } from './useLibrarySearch';
 
 function setup(initial = '/') {
@@ -8,7 +8,11 @@ function setup(initial = '/') {
     <MemoryRouter initialEntries={[initial]}>{children}</MemoryRouter>
   );
   return renderHook(
-    () => ({ search: useLibrarySearch(), location: useLocation() }),
+    () => ({
+      search: useLibrarySearch(),
+      location: useLocation(),
+      navigate: useNavigate(),
+    }),
     { wrapper },
   );
 }
@@ -72,4 +76,27 @@ it('mirrors the query to ?q= by replacing, and drops it when empty', () => {
   act(() => result.current.search.setInput(''));
   act(() => vi.advanceTimersByTime(250));
   expect(result.current.location.search).toBe('');
+});
+
+it('follows ?q= changes that come from outside the search box', () => {
+  const { result } = setup('/?q=suppe');
+
+  act(() => result.current.navigate('/?q=kuchen'));
+  expect(result.current.search.input).toBe('kuchen');
+  expect(result.current.search.q).toBe('kuchen');
+
+  act(() => result.current.navigate('/'));
+  expect(result.current.search.input).toBe('');
+  expect(result.current.search.q).toBe('');
+  expect(result.current.location.search).toBe('');
+});
+
+it('does not reset the input while a typed query is still being mirrored', () => {
+  const { result } = setup('/?q=suppe');
+
+  act(() => result.current.search.setInput('kuchen'));
+  act(() => vi.advanceTimersByTime(250));
+
+  expect(result.current.search.input).toBe('kuchen');
+  expect(result.current.location.search).toBe('?q=kuchen');
 });

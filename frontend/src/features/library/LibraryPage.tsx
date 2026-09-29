@@ -8,7 +8,7 @@ import { useLibrarySearch } from './useLibrarySearch';
 
 export function LibraryPage() {
   const { input, setInput, q } = useLibrarySearch();
-  const { data: recipes, isPlaceholderData } = useRecipes(q);
+  const { data: recipes, isPlaceholderData, isError } = useRecipes(q);
 
   return (
     <main className="mx-auto max-w-2xl p-4">
@@ -32,6 +32,11 @@ export function LibraryPage() {
           />
         </div>
       </div>
+      {isError && (
+        <p className="py-8 text-center text-destructive">
+          Rezepte konnten nicht geladen werden.
+        </p>
+      )}
       {recipes?.length === 0 && !isPlaceholderData && (
         <p className="py-8 text-center text-muted-foreground">
           {q ? (

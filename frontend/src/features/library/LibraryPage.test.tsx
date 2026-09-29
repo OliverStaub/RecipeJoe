@@ -1,5 +1,5 @@
 import { screen, waitFor } from '@testing-library/react';
-import { delay } from 'msw';
+import { HttpResponse, delay } from 'msw';
 import userEvent from '@testing-library/user-event';
 import { http, server } from '@/test/server';
 import { renderApp } from '@/test/render';
@@ -107,4 +107,20 @@ it('does not claim "no hits" for a query whose results are still loading', async
   await waitFor(() =>
     expect(screen.queryByText(/Keine Rezepte zu/)).not.toBeInTheDocument(),
   );
+});
+
+it('says so when loading the Library fails', async () => {
+  server.use(
+    http.get('/api/recipes', ({ response }) =>
+      response.untyped(HttpResponse.json({}, { status: 500 })),
+    ),
+  );
+  renderApp();
+
+  expect(
+    await screen.findByText('Rezepte konnten nicht geladen werden.'),
+  ).toBeInTheDocument();
+  expect(
+    screen.queryByText('Importiere dein erstes Rezept'),
+  ).not.toBeInTheDocument();
 });
