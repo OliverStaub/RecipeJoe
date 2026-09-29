@@ -9,11 +9,15 @@ trap 'rm -rf "$tmp"' EXIT
 R="$tmp/repo"
 W="$R/.claude/worktrees/agent-1"
 F="$R/.claude/worktrees/agent-feature"
+P="$tmp/plain"
 {
   git init -q -b main "$R"
   git -C "$R" -c user.name=t -c user.email=t@t commit -q --allow-empty -m init
   git -C "$R" worktree add -q "$W" -b worktree-agent-1
   git -C "$R" worktree add -q "$F" -b feature
+  git init -q -b main "$P"
+  git -C "$P" -c user.name=t -c user.email=t@t commit -q --allow-empty -m init
+  git -C "$P" checkout -q -b feature-x
 } || { echo "setup failed"; exit 1; }
 
 pass=0
@@ -48,13 +52,20 @@ check allow "$R" "cd .claude/worktrees/agent-1 && git add a && git commit -m x"
 check deny "$R" "cd .claude/worktrees/agent-1 && cd ../../.. && git commit -m x"
 check deny "$W" "cd $R && git commit -m x"
 check deny "$W" "git --git-dir=$R/.git commit -m x"
-check deny "$F" "git commit -m x"
 
-# switch -c research/* only in agent worktree
+# add/commit allowed anywhere on a non-main branch, worktree or not
+check allow "$F" "git commit -m x"
+check allow "$P" "git add ."
+check allow "$P" "git commit -m x"
+
+# switch -c: any non-main branch name, anywhere
 check allow "$W" "git switch -c research/foo"
 check allow "$W" "git switch -c research/foo && git add f && git commit -m x"
-check deny "$R" "git switch -c research/foo"
-check deny "$W" "git switch -c feature/foo"
+check allow "$R" "git switch -c research/foo"
+check allow "$W" "git switch -c feature/foo"
+check allow "$P" "git switch -c feature/foo"
+check deny "$R" "git switch -c main"
+check deny "$P" "git switch -c master"
 check deny "$W" "git switch main"
 check deny "$W" "git switch -C research/foo"
 

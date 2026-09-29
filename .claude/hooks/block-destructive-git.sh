@@ -4,13 +4,17 @@
 # Allows read-only git commands (status, log, diff, show, branch/tag/remote
 # listing, plain fetch, config --get, ...).
 #
-# Agent-worktree carve-out (the only mutating git allowed):
+# Mutating git allowed:
+# - git switch -c <branch>, for any branch name except main/master, anywhere
+#   in the working tree (main checkout or an agent worktree)
+# - git add / git commit, anywhere, as long as the current branch is not
+#   main/master and HEAD isn't detached
 # - git worktree list|prune; add|remove only for paths under .claude/worktrees/
 #   (remove without --force, so uncommitted work is never discarded)
-# - git switch -c research/<name>, inside an agent worktree
-# - git add / git commit, inside an agent worktree on a research/* or
-#   worktree-agent-* branch
 # - git branch -d/-D, only for worktree-agent-* branches
+#
+# git push, merge, rebase, reset, etc. stay blocked: the agent commits to a
+# branch, a human pushes/merges it.
 #
 # This is a heuristic firewall, not a sandbox: it inspects the literal
 # command string. It cannot catch every possible obfuscation (e.g. a
@@ -187,20 +191,21 @@ while IFS= read -r segment; do
         [ "$redirected" -eq 1 ] && deny "git switch with --git-dir/--work-tree is blocked"
         case "${rest[0]:-}" in
           -c | --create) ;;
-          *) deny "git switch is only allowed as 'git switch -c research/<name>' inside an agent worktree" ;;
+          *) deny "git switch is only allowed as 'git switch -c <branch>' to create a new non-main branch" ;;
         esac
         b=$(unquote "${rest[1]:-}")
         case "$b" in
-          research/?*) ;;
-          *) deny "git switch -c is only allowed for research/* branches (got '$b')" ;;
+          "") deny "git switch -c needs a branch name" ;;
+          main | master) deny "git switch -c may not create a branch named '$b'" ;;
         esac
-        in_agent_worktree "$gitdir" || deny "git switch -c is only allowed inside an agent worktree (.claude/worktrees/)"
         ;;
       add | commit)
         [ "$redirected" -eq 1 ] && deny "git $subcmd with --git-dir/--work-tree is blocked"
-        in_agent_worktree "$gitdir" || deny "git $subcmd is only allowed inside an agent worktree (.claude/worktrees/), not in the main checkout"
         current=$(git -C "$gitdir" branch --show-current 2>/dev/null)
-        is_agent_branch "$current" || deny "git $subcmd is only allowed on research/* or worktree-agent-* branches (current: '${current:-detached}')"
+        case "$current" in
+          "") deny "git $subcmd is blocked on detached HEAD; switch to a branch first" ;;
+          main | master) deny "git $subcmd is blocked on '$current'; switch to a feature branch first" ;;
+        esac
         ;;
       *)
         deny "git $subcmd can change repository state and is blocked by project policy. Read-only commands (status, log, diff, show, branch/tag/remote listing, plain fetch) are allowed."
