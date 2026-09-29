@@ -207,6 +207,9 @@ while IFS= read -r segment; do
           main | master) deny "git $subcmd is blocked on '$current'; switch to a feature branch first" ;;
         esac
         ;;
+      checkout)
+        deny "git checkout is blocked. To create a branch use: git switch -c feature/<name> (any non-main name). Then git add / git commit work on that branch."
+        ;;
       *)
         deny "git $subcmd can change repository state and is blocked by project policy. Read-only commands (status, log, diff, show, branch/tag/remote listing, plain fetch) are allowed."
         ;;
