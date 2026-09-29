@@ -79,7 +79,7 @@ in_agent_worktree() {
 
 is_agent_branch() {
   case "$1" in
-    research/?* | worktree-agent-?*) return 0 ;;
+    research/?* | feature/?* | worktree-agent-?*) return 0 ;;
     *) return 1 ;;
   esac
 }
@@ -179,7 +179,7 @@ while IFS= read -r segment; do
               deny "git worktree remove --force is blocked: commit the worktree's work to its branch first, then remove without --force"
             fi
             if [ -n "$newbranch" ] && ! is_agent_branch "$newbranch"; then
-              deny "git worktree add -b is only allowed for research/* or worktree-agent-* branches (got '$newbranch')"
+              deny "git worktree add -b is only allowed for research/*, feature/* or worktree-agent-* branches (got '$newbranch')"
             fi
             ;;
           *)

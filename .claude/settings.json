@@ -3,7 +3,7 @@
     "allow": [
       "Bash(git add*)",
       "Bash(git commit*)",
-      "Bash(git switch -c research/*)",
+      "Bash(git switch -c *)",
       "Bash(git worktree*)",
       "Bash(git branch -d worktree-agent-*)",
       "Bash(git branch -D worktree-agent-*)",
