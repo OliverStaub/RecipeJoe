@@ -26,6 +26,11 @@ test.fixme('Import opens the Cook View with the tokenised title', async ({
     page.getByRole('heading', { name: `Testrezept ${token}` }),
   ).toBeVisible();
   await expect(page.getByText('500 g Kartoffeln')).toBeVisible();
+  // Wake Lock needs a secure context and browser support; assert only where present.
+  const wakeLockSupported = await page.evaluate(() => 'wakeLock' in navigator);
+  if (wakeLockSupported) {
+    await expect(page.getByText('Bildschirm bleibt an')).toBeVisible();
+  }
   // The backend downloaded /images/e2e-recipe.jpg from the fixtures site and serves it itself.
   const image = page.getByRole('img', { name: `Testrezept ${token}` });
   await expect(image).toBeVisible();

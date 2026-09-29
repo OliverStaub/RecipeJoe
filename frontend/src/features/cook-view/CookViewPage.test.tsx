@@ -1,4 +1,5 @@
 import { screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { http, server } from '@/test/server';
 import { recipe, renderApp } from '@/test/render';
 
@@ -65,4 +66,78 @@ it('says so when loading the Recipe fails', async () => {
   expect(
     await screen.findByText('Rezept konnte nicht geladen werden.'),
   ).toBeInTheDocument();
+});
+
+it('shows Servings and formatted times, each only when present', async () => {
+  server.use(
+    http.get('/api/recipes/{id}', ({ response }) =>
+      response(200).json({
+        ...recipe,
+        servings: '4 bis 6 Portionen',
+        prepMinutes: 15,
+        cookMinutes: null,
+        totalMinutes: 75,
+      }),
+    ),
+  );
+  renderApp('/recipes/7');
+  expect(await screen.findByText('4 bis 6 Portionen')).toBeInTheDocument();
+  expect(screen.getByText('Vorbereitung: 15 Min.')).toBeInTheDocument();
+  expect(screen.getByText('Gesamt: 1 Std. 15 Min.')).toBeInTheDocument();
+  expect(screen.queryByText(/Kochen:/)).not.toBeInTheDocument();
+});
+
+it('shows no Servings or time badges when the Recipe has none', async () => {
+  server.use(
+    http.get('/api/recipes/{id}', ({ response }) => response(200).json(recipe)),
+  );
+  renderApp('/recipes/7');
+  await screen.findByRole('heading', { name: 'Kartoffelsuppe' });
+  expect(screen.queryByText(/Vorbereitung|Kochen:|Gesamt/)).toBeNull();
+});
+
+it('links the Source in the footer and the menu', async () => {
+  server.use(
+    http.get('/api/recipes/{id}', ({ response }) => response(200).json(recipe)),
+  );
+  renderApp('/recipes/7');
+  expect(
+    await screen.findByRole('link', { name: 'Von fixtures' }),
+  ).toHaveAttribute('href', 'http://fixtures/e2e/recipe.html');
+  await userEvent.click(screen.getByRole('button', { name: 'Mehr' }));
+  expect(
+    await screen.findByRole('menuitem', { name: 'Quelle öffnen' }),
+  ).toHaveAttribute('href', 'http://fixtures/e2e/recipe.html');
+});
+
+describe('Wake Lock badge', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('says the screen stays on when supported', async () => {
+    vi.stubGlobal('navigator', {
+      wakeLock: {
+        request: async () =>
+          Object.assign(new EventTarget(), { release: async () => {} }),
+      },
+    });
+    server.use(
+      http.get('/api/recipes/{id}', ({ response }) =>
+        response(200).json(recipe),
+      ),
+    );
+    renderApp('/recipes/7');
+    expect(await screen.findByText('Bildschirm bleibt an')).toBeInTheDocument();
+  });
+
+  it('says it is unavailable when unsupported', async () => {
+    server.use(
+      http.get('/api/recipes/{id}', ({ response }) =>
+        response(200).json(recipe),
+      ),
+    );
+    renderApp('/recipes/7');
+    expect(
+      await screen.findByText('Bildschirmsperre nicht verfügbar'),
+    ).toBeInTheDocument();
+  });
 });
