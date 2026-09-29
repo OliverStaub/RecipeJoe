@@ -1,8 +1,13 @@
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Npgsql;
 using Respawn;
+using RecipeJoe.Api.Import;
+using RecipeJoe.UnitTests.Import;
 
 namespace RecipeJoe.IntegrationTests;
 
@@ -18,6 +23,10 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
                 new Dictionary<string, string?> { ["ConnectionStrings:Db"] = PostgresFixture.ConnectionString }
             );
         });
+
+        builder.ConfigureTestServices(services =>
+            services.Replace(ServiceDescriptor.Singleton<IPageFetcher, FixturePageFetcher>())
+        );
     }
 
     public async Task ResetDatabaseAsync()
@@ -25,21 +34,10 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
         await using var connection = new NpgsqlConnection(PostgresFixture.ConnectionString);
         await connection.OpenAsync();
 
-        if (_respawner is null)
-        {
-            try
-            {
-                _respawner = await Respawner.CreateAsync(
-                    connection,
-                    new RespawnerOptions { DbAdapter = DbAdapter.Postgres, TablesToIgnore = ["__EFMigrationsHistory"] }
-                );
-            }
-            catch (InvalidOperationException)
-            {
-                // No data tables exist yet (the skeleton's model has none); nothing to reset until real entities land.
-                return;
-            }
-        }
+        _respawner ??= await Respawner.CreateAsync(
+            connection,
+            new RespawnerOptions { DbAdapter = DbAdapter.Postgres, TablesToIgnore = ["__EFMigrationsHistory"] }
+        );
 
         await _respawner.ResetAsync(connection);
     }

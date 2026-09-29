@@ -318,10 +318,17 @@
       "recipejoe.api": {
         "type": "Project",
         "dependencies": {
+          "AngleSharp": "[1.8.2, )",
           "Microsoft.AspNetCore.OpenApi": "[10.0.12, )",
           "Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore": "[10.0.12, )",
           "Npgsql.EntityFrameworkCore.PostgreSQL": "[10.0.3, )"
         }
+      },
+      "AngleSharp": {
+        "type": "CentralTransitive",
+        "requested": "[1.8.2, )",
+        "resolved": "1.8.2",
+        "contentHash": "iRlkfBIhi+gTgTxBlYNT4PlmaiVEy7+qX3BmprAK4cYE1UjfSNFI4mEDyxC1qgtAKYg5rjGYgL3tJlzGF+Ukdg=="
       },
       "Microsoft.AspNetCore.OpenApi": {
         "type": "CentralTransitive",

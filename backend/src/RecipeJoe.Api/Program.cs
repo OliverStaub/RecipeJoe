@@ -2,6 +2,8 @@ using System.Reflection;
 using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 using RecipeJoe.Api;
+using RecipeJoe.Api.Import;
+using RecipeJoe.Api.Recipes;
 
 var isBuildTimeOpenApiGeneration = Assembly.GetEntryAssembly()?.GetName().Name == "GetDocument.Insider";
 
@@ -10,10 +12,15 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddSingleton(TimeProvider.System);
 
 builder.Services.ConfigureHttpJsonOptions(options =>
-    options.SerializerOptions.NumberHandling = JsonNumberHandling.Strict);
+    {
+        options.SerializerOptions.NumberHandling = JsonNumberHandling.Strict;
+        options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
 
 builder.Services.AddDbContext<RecipeJoeDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Db")));
+
+builder.Services.AddImport();
 
 builder.Services.AddOpenApi();
 
@@ -31,6 +38,8 @@ if (!isBuildTimeOpenApiGeneration)
 
 app.MapOpenApi();
 app.MapHealthChecks("/health");
+app.MapImportEndpoints();
+app.MapRecipeEndpoints();
 
 app.Run();
 
