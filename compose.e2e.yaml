@@ -1,5 +1,10 @@
-# E2E override for `just test-e2e`: the backend imports from the fixtures site.
+# E2E override for `just test-e2e`, run as its own compose project (recipejoe-e2e): own containers
+# and database volume, only web published, so it runs alongside `just dev` without touching its data.
 services:
+  postgres:
+    ports: !reset []
+  fixtures:
+    ports: !reset []
   backend:
     environment:
       # Reachable as http://fixtures (port 80 inside the compose network); exempt from the SSRF guard.
@@ -7,3 +12,7 @@ services:
     depends_on:
       fixtures:
         condition: service_healthy
+    ports: !reset []
+  web:
+    ports: !override
+      - '127.0.0.1:${E2E_WEB_PORT:-8090}:80'

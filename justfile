@@ -5,7 +5,8 @@ set dotenv-load
 set shell := ["bash", "-euo", "pipefail", "-c"]
 
 sln := "RecipeJoe.slnx"
-e2e_compose := "docker compose -f compose.yaml -f compose.e2e.yaml --profile app --profile fixtures"
+# Its own compose project, so E2E never touches the dev database and runs alongside `just dev`.
+e2e_compose := "docker compose -p recipejoe-e2e -f compose.yaml -f compose.e2e.yaml --profile app --profile fixtures"
 prettier := justfile_directory() / "frontend/node_modules/.bin/prettier"
 # Root-level YAML/JSON (compose, CI, Renovate, Claude settings), formatted with the frontend's Prettier.
 root_globs := "*.{json,yml,yaml} .github/**/*.{yml,yaml} .claude/*.json docker/**/*.{json,yml,yaml}"
@@ -14,9 +15,8 @@ root_globs := "*.{json,yml,yaml} .github/**/*.{yml,yaml} .claude/*.json docker/*
 list:
     @just --list --unsorted
 
-# --- setup -------------------------------------------------------------------
-
 # First-time setup on a fresh clone.
+[group('setup')]
 setup:
     [ -f .env ] || cp .env.example .env
     lefthook install
@@ -25,9 +25,8 @@ setup:
     cd backend && dotnet restore {{ sln }} --locked-mode
     cd backend && dotnet tool restore
 
-# --- develop -----------------------------------------------------------------
-
 # Postgres + API with hot reload (:5080) + Vite; Ctrl-C stops all three, data survives.
+[group('develop')]
 dev:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -41,28 +40,29 @@ dev:
         dotnet watch --project src/RecipeJoe.Api
 
 # Import every fixture recipe into an empty dev Library (needs `just dev`); fixtures run only meanwhile.
+[group('develop')]
 seed:
     docker compose --profile fixtures up -d --wait fixtures
     trap 'docker compose --profile fixtures stop fixtures' EXIT; scripts/seed.sh
 
-# --- full stack --------------------------------------------------------------
-
 # Build and (re)start postgres, backend and web (http://localhost:8080).
+[group('full stack')]
 up:
     docker compose --profile app up -d --build --wait
 
-# Stop every container; `just down -v` also deletes the database volume.
+# Remove the dev containers (the database volume stays); `just down -v` also deletes it.
+[group('full stack')]
 down *args:
     docker compose --profile app --profile fixtures down "$@"
 
-# --- build / format / lint ---------------------------------------------------
-
 # Build backend and frontend.
+[group('build / format / lint')]
 build:
     cd backend && dotnet build {{ sln }}
     cd frontend && npm run build
 
 # Fix formatting everywhere.
+[group('build / format / lint')]
 fmt:
     cd backend && dotnet format {{ sln }}
     cd frontend && npm run format
@@ -70,6 +70,7 @@ fmt:
     {{ prettier }} --write --ignore-unknown --no-error-on-unmatched-pattern {{ root_globs }}
 
 # Verify formatting everywhere (no changes).
+[group('build / format / lint')]
 fmt-check:
     cd backend && dotnet format {{ sln }} --verify-no-changes
     cd frontend && npm run format:check
@@ -77,72 +78,60 @@ fmt-check:
     {{ prettier }} --check --ignore-unknown --no-error-on-unmatched-pattern {{ root_globs }}
 
 # ESLint, tsc and the backend build with analyzers as errors.
+[group('build / format / lint')]
 lint:
     cd frontend && npm run lint && npm run typecheck
     cd e2e && npm run lint && npm run typecheck
     cd backend && dotnet build {{ sln }} --no-incremental -warnaserror
 
-# --- tests -------------------------------------------------------------------
-
 # Every layer.
+[group('tests')]
 test: test-unit test-int test-contract test-e2e
 
 # Backend unit tests (extra args go to dotnet test) + Vitest.
+[group('tests')]
 [working-directory('backend')]
 test-unit *args:
     dotnet test --project tests/RecipeJoe.UnitTests "$@"
     cd ../frontend && npm test
 
 # Backend integration tests; Testcontainers starts its own Postgres.
+[group('tests')]
 [working-directory('backend')]
 test-int *args:
     dotnet test --project tests/RecipeJoe.IntegrationTests "$@"
 
 # OpenAPI/TS client drift and pending EF model changes.
+[group('tests')]
 [working-directory('backend')]
 test-contract *args:
     dotnet test --project tests/RecipeJoe.ContractTests "$@"
     cd ../frontend && npm run check:api
 
-# Fresh stack plus the fixtures site (compose.e2e.yaml), then Playwright against it.
+# Fresh isolated stack plus the fixtures site (web on :8090), then Playwright against it.
+[group('tests')]
 test-e2e *args:
     {{ e2e_compose }} down -v
     {{ e2e_compose }} up -d --build --wait
-    cd e2e && npx playwright test "$@"
+    cd e2e && BASE_URL="http://localhost:${E2E_WEB_PORT:-8090}" npx playwright test "$@"
 
-# --- coverage ----------------------------------------------------------------
-# The 80 % line gate applies only when CI is set: `CI=1 just cov-backend`.
+# Remove the E2E stack and its database.
+[group('tests')]
+down-e2e:
+    {{ e2e_compose }} down -v
 
-# Unit + integration tests with coverage merged by ReportGenerator (extra args go to dotnet test).
-[working-directory('backend')]
+# Unit + integration tests with merged coverage; 80 % line gate only when CI is set (extra args go to dotnet test).
+[group('coverage')]
 cov-backend *args:
-    rm -rf TestResults/coverage CoverageReport
-    for project in UnitTests IntegrationTests; do \
-        dotnet test --project tests/RecipeJoe.$project "$@" \
-            --coverage --coverage-output-format cobertura \
-            --coverage-settings CodeCoverage.config \
-            --results-directory TestResults/coverage; \
-    done
-    dotnet reportgenerator \
-        -reports:"TestResults/coverage/*.cobertura.xml" \
-        -targetdir:CoverageReport \
-        -reporttypes:"TextSummary;MarkdownSummaryGithub"
-    cat CoverageReport/Summary.txt
-    if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then cat CoverageReport/SummaryGithub.md >> "$GITHUB_STEP_SUMMARY"; fi
-    # ReportGenerator's threshold option is PRO-only, so the gate is checked here.
-    if [ -n "${CI:-}" ]; then \
-        line=$(sed -n 's/^ *Line coverage: *\([0-9.]*\)%.*/\1/p' CoverageReport/Summary.txt); \
-        awk -v c="$line" 'BEGIN { exit !(c != "" && c >= 80) }' \
-            || { echo "Line coverage ${line:-unknown}% is below the 80% gate" >&2; exit 1; }; \
-    fi
+    scripts/coverage.sh "$@"
 
+[group('coverage')]
 [working-directory('frontend')]
 cov-frontend:
     npm run cov
 
-# --- mutation testing (local only) -------------------------------------------
-
-# Stryker.NET (unit tests) + StrykerJS.
+# Stryker.NET (unit tests) + StrykerJS; local only.
+[group('mutation testing')]
 mutate:
     cd backend/tests/RecipeJoe.UnitTests && dotnet dotnet-stryker
     cd frontend && npx stryker run

@@ -7,7 +7,8 @@ export default defineConfig({
   retries: 1,
   reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : 'list',
   use: {
-    baseURL: 'http://localhost:8080',
+    // The isolated E2E stack's web port (compose.e2e.yaml); `just test-e2e` sets it.
+    baseURL: process.env.BASE_URL ?? 'http://localhost:8090',
     trace: 'retain-on-failure',
   },
   projects: [
