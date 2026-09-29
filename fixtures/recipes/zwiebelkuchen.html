@@ -1,0 +1,60 @@
+<!-- Variant: @graph wrapper; @id references for instructions -->
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <title>Zwiebelkuchen</title>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "#site",
+      "name": "Testküche"
+    },
+    {
+      "@type": "Person",
+      "@id": "#autor",
+      "name": "Erika"
+    },
+    {
+      "@type": "Recipe",
+      "@id": "#rezept",
+      "name": "Zwiebelkuchen",
+      "author": {
+        "@id": "#autor"
+      },
+      "recipeYield": "8 Stücke",
+      "prepTime": "PT30M",
+      "cookTime": "PT45M",
+      "recipeIngredient": [
+        "1 kg Zwiebeln",
+        "200 g Speck",
+        "3 Eier"
+      ],
+      "recipeInstructions": [
+        {
+          "@id": "#s1"
+        },
+        {
+          "@id": "#s2"
+        }
+      ]
+    },
+    {
+      "@type": "HowToStep",
+      "@id": "#s1",
+      "text": "Zwiebeln und Speck andünsten."
+    },
+    {
+      "@type": "HowToStep",
+      "@id": "#s2",
+      "text": "Mit Eiern auf den Teig geben und backen."
+    }
+  ]
+}
+  </script>
+</head>
+<body><h1>Zwiebelkuchen</h1></body>
+</html>

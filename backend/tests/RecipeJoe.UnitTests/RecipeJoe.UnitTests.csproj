@@ -11,6 +11,7 @@
 
   <ItemGroup>
     <None Include="../../../fixtures/**" Link="fixtures/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Import/CorpusExpectations.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

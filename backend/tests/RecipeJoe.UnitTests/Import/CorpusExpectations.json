@@ -1,0 +1,510 @@
+{
+  "apfelkuchen.html": {
+    "title": "Einfacher Apfelkuchen",
+    "servings": "12",
+    "prepMinutes": 20,
+    "cookMinutes": 60,
+    "totalMinutes": null,
+    "ingredientLines": [
+      "4 Äpfel",
+      "200 g Mehl",
+      "150 g Zucker",
+      "3 Eier",
+      "1 Päckchen Backpulver"
+    ],
+    "steps": [
+      "Äpfel schälen und in Scheiben schneiden.",
+      "Teig aus Mehl, Zucker, Eiern und Backpulver rühren.",
+      "Äpfel unterheben und 1 Stunde bei 180 °C backen."
+    ]
+  },
+  "banana-bread.html": {
+    "title": "Banana Bread",
+    "servings": "1 loaf",
+    "prepMinutes": 20,
+    "cookMinutes": null,
+    "totalMinutes": 90,
+    "ingredientLines": [
+      "3 ripe bananas",
+      "200 g flour",
+      "100 g sugar"
+    ],
+    "steps": [
+      "Mash the bananas.",
+      "Mix with flour and sugar, then bake."
+    ]
+  },
+  "bratkartoffeln.html": {
+    "title": "Bratkartoffeln",
+    "servings": "4 Portionen",
+    "prepMinutes": null,
+    "cookMinutes": null,
+    "totalMinutes": null,
+    "ingredientLines": [
+      "800 g Kartoffeln",
+      "100 g Speck"
+    ],
+    "steps": [
+      "Kartoffeln in Scheiben schneiden.",
+      "Knusprig braten."
+    ]
+  },
+  "brezeln.html": {
+    "title": "Laugenbrezeln",
+    "servings": "8 Stück",
+    "prepMinutes": 45,
+    "cookMinutes": 20,
+    "totalMinutes": 65,
+    "ingredientLines": [
+      "500 g Mehl",
+      "1 Würfel Hefe",
+      "300 ml Wasser",
+      "grobes Salz"
+    ],
+    "steps": [
+      "Hefeteig kneten und gehen lassen.",
+      "Brezeln formen und in Lauge tauchen.",
+      "Mit Salz bestreuen und backen."
+    ]
+  },
+  "flammkuchen.html": {
+    "title": "Flammkuchen",
+    "servings": "2 Portionen",
+    "prepMinutes": 15,
+    "cookMinutes": 12,
+    "totalMinutes": 27,
+    "ingredientLines": [
+      "1 Rolle Flammkuchenteig",
+      "200 g Crème fraîche",
+      "100 g Speck",
+      "1 Zwiebel"
+    ],
+    "steps": [
+      "Teig ausrollen und mit Crème fraîche bestreichen.",
+      "Mit Speck und Zwiebelringen belegen.",
+      "12 Minuten bei 250 °C backen."
+    ]
+  },
+  "fried-rice.html": {
+    "title": "Fried Rice",
+    "servings": "4 to 6",
+    "prepMinutes": null,
+    "cookMinutes": null,
+    "totalMinutes": null,
+    "ingredientLines": [
+      "1 cup rice",
+      "2",
+      "salt"
+    ],
+    "steps": [
+      "Cook the rice.",
+      "Fry with the rest."
+    ]
+  },
+  "gemuesepfanne.html": {
+    "title": "Bunte Gemüsepfanne",
+    "servings": "2 Portionen",
+    "prepMinutes": 15,
+    "cookMinutes": 10,
+    "totalMinutes": 25,
+    "ingredientLines": [
+      "1 Paprika",
+      "1 Zucchini",
+      "2 Karotten",
+      "2 EL Olivenöl"
+    ],
+    "steps": [
+      "Gemüse in Streifen schneiden.",
+      "Im heißen Öl 10 Minuten braten."
+    ]
+  },
+  "griessbrei.html": {
+    "title": "Grießbrei",
+    "servings": "2 Portionen",
+    "prepMinutes": 5,
+    "cookMinutes": 10,
+    "totalMinutes": 15,
+    "ingredientLines": [
+      "500 ml Milch",
+      "60 g Grieß",
+      "2 EL Zucker",
+      "Zimt"
+    ],
+    "steps": [
+      "Milch aufkochen.",
+      "Grieß einrühren und quellen lassen.",
+      "Mit Zucker und Zimt servieren."
+    ]
+  },
+  "gulasch.html": {
+    "title": "Rindergulasch",
+    "servings": "6 Portionen",
+    "prepMinutes": 30,
+    "cookMinutes": 120,
+    "totalMinutes": 150,
+    "ingredientLines": [
+      "800 g Rindfleisch",
+      "3 Zwiebeln",
+      "2 EL Paprikapulver",
+      "500 ml Brühe"
+    ],
+    "steps": [
+      "Fleisch würfeln und anbraten.",
+      "Zwiebeln und Paprika zugeben.",
+      "Mit Brühe aufgießen und 2 Stunden schmoren."
+    ]
+  },
+  "haferkekse.html": {
+    "title": "Haferkekse",
+    "servings": "24 Stück",
+    "prepMinutes": null,
+    "cookMinutes": null,
+    "totalMinutes": null,
+    "ingredientLines": [
+      "200 g Haferflocken",
+      "100 g Butter",
+      "80 g Zucker"
+    ],
+    "steps": [
+      "Zutaten verkneten.",
+      "Kekse formen und 12 Minuten backen."
+    ]
+  },
+  "huehnersuppe.html": {
+    "title": "Hühnersuppe",
+    "servings": "4",
+    "prepMinutes": null,
+    "cookMinutes": null,
+    "totalMinutes": null,
+    "ingredientLines": [
+      "1 Suppenhuhn",
+      "3 Karotten",
+      "1 Stange Lauch"
+    ],
+    "steps": [
+      "Huhn in kaltem Wasser aufsetzen.",
+      "Karotten und Lauch 1 Stunde mitköcheln.\nAbschmecken.",
+      "Servieren"
+    ]
+  },
+  "kaesekuchen.html": {
+    "title": "Käsekuchen",
+    "servings": "12 Stücke",
+    "prepMinutes": 30,
+    "cookMinutes": 60,
+    "totalMinutes": 90,
+    "ingredientLines": [
+      "500 g Quark",
+      "200 g Zucker",
+      "4 Eier",
+      "1 Päckchen Vanillepudding"
+    ],
+    "steps": [
+      "Quark mit Zucker, Eiern und Puddingpulver verrühren.",
+      "In eine Springform füllen.",
+      "Bei 175 °C eine Stunde backen."
+    ]
+  },
+  "kaiserschmarrn.html": {
+    "title": "Kaiserschmarrn",
+    "servings": "2 Portionen",
+    "prepMinutes": 10,
+    "cookMinutes": 15,
+    "totalMinutes": 25,
+    "ingredientLines": [
+      "4 Eier",
+      "200 ml Milch",
+      "150 g Mehl",
+      "2 EL Rosinen"
+    ],
+    "steps": [
+      "Teig aus Eiern, Milch und Mehl rühren.",
+      "In der Pfanne backen und in Stücke reißen.",
+      "Mit Puderzucker bestäuben."
+    ]
+  },
+  "kartoffelsalat.html": {
+    "title": "Schwäbischer Kartoffelsalat",
+    "servings": "4 Portionen",
+    "prepMinutes": 20,
+    "cookMinutes": 25,
+    "totalMinutes": 45,
+    "ingredientLines": [
+      "1 kg Kartoffeln",
+      "1 Zwiebel",
+      "250 ml Brühe",
+      "3 EL Essig"
+    ],
+    "steps": [
+      "Kartoffeln kochen, pellen und in Scheiben schneiden.",
+      "Warme Brühe mit Essig und Zwiebel darübergießen."
+    ]
+  },
+  "kartoffelsuppe.html": {
+    "title": "Kartoffelsuppe",
+    "servings": "4 Portionen",
+    "prepMinutes": 15,
+    "cookMinutes": 30,
+    "totalMinutes": 45,
+    "ingredientLines": [
+      "800 g Kartoffeln",
+      "1 Zwiebel",
+      "1 l Gemüsebrühe",
+      "Salz und Pfeffer"
+    ],
+    "steps": [
+      "Kartoffeln und Zwiebel schälen und würfeln.",
+      "In der Brühe 30 Minuten weich kochen.",
+      "Pürieren und abschmecken."
+    ]
+  },
+  "kirschtorte.html": {
+    "title": "Schwarzwälder Kirschtorte",
+    "servings": "12 Stücke",
+    "prepMinutes": null,
+    "cookMinutes": null,
+    "totalMinutes": null,
+    "ingredientLines": [
+      "6 Eier",
+      "200 g Schokolade",
+      "500 g Kirschen",
+      "400 ml Sahne"
+    ],
+    "steps": [
+      "Biskuit backen.",
+      "Auskühlen lassen.",
+      "Sahne steif schlagen.",
+      "Kirschen abtropfen.",
+      "Schichten und kühlen."
+    ]
+  },
+  "linsensuppe.html": {
+    "title": "Linsensuppe & Würstchen",
+    "servings": null,
+    "prepMinutes": null,
+    "cookMinutes": null,
+    "totalMinutes": null,
+    "ingredientLines": [
+      "250 g Tellerlinsen",
+      "2 Karotten",
+      "2 Wiener Würstchen"
+    ],
+    "steps": [
+      "Linsen mit Karotten in Wasser weich kochen.",
+      "Würstchen in Scheiben schneiden und kurz miterhitzen."
+    ]
+  },
+  "nudelsalat.html": {
+    "title": "Nudelsalat",
+    "servings": "6 Portionen",
+    "prepMinutes": 20,
+    "cookMinutes": 10,
+    "totalMinutes": 30,
+    "ingredientLines": [
+      "500 g Nudeln",
+      "200 g Gurken",
+      "150 g Mayonnaise",
+      "1 Bund Schnittlauch"
+    ],
+    "steps": [
+      "Nudeln kochen und abkühlen lassen.",
+      "Mit Gurken, Mayonnaise und Schnittlauch mischen."
+    ]
+  },
+  "pfannkuchen.html": {
+    "title": "Pfannkuchen",
+    "servings": "4 Portionen",
+    "prepMinutes": 10,
+    "cookMinutes": 15,
+    "totalMinutes": 25,
+    "ingredientLines": [
+      "250 g Mehl",
+      "500 ml Milch",
+      "3 Eier",
+      "1 Prise Salz"
+    ],
+    "steps": [
+      "Teig glatt rühren und 10 Minuten ruhen lassen.",
+      "In der Pfanne dünn ausbacken."
+    ]
+  },
+  "pizza.html": {
+    "title": "Pizzateig",
+    "servings": "2 Pizzen",
+    "prepMinutes": null,
+    "cookMinutes": null,
+    "totalMinutes": null,
+    "ingredientLines": [
+      "500 g Mehl",
+      "1 Würfel Hefe"
+    ],
+    "steps": [
+      "Teig kneten.",
+      "Gehen lassen."
+    ]
+  },
+  "rahmspinat.html": {
+    "title": "Rahmspinat",
+    "servings": "3 Portionen",
+    "prepMinutes": 10,
+    "cookMinutes": 10,
+    "totalMinutes": 20,
+    "ingredientLines": [
+      "500 g Blattspinat",
+      "1 Zwiebel",
+      "150 ml Sahne",
+      "Muskat"
+    ],
+    "steps": [
+      "Zwiebel andünsten, Spinat zugeben.",
+      "Sahne einrühren und mit Muskat würzen."
+    ]
+  },
+  "rotkohl.html": {
+    "title": "Rotkohl",
+    "servings": "6 Portionen",
+    "prepMinutes": 20,
+    "cookMinutes": 60,
+    "totalMinutes": 80,
+    "ingredientLines": [
+      "1 Kopf Rotkohl",
+      "2 Äpfel",
+      "100 ml Rotwein",
+      "2 EL Zucker"
+    ],
+    "steps": [
+      "Kohl hobeln, Äpfel würfeln.",
+      "Alles mit Wein und Zucker 1 Stunde schmoren."
+    ]
+  },
+  "ruehrei.html": {
+    "title": "Rührei",
+    "servings": "1 Portion",
+    "prepMinutes": null,
+    "cookMinutes": null,
+    "totalMinutes": null,
+    "ingredientLines": [
+      "3 Eier",
+      "1 EL Butter"
+    ],
+    "steps": [
+      "Eier verquirlen.",
+      "Butter erhitzen.",
+      "Eier stocken lassen und servieren."
+    ]
+  },
+  "sauerbraten.html": {
+    "title": "Sauerbraten",
+    "servings": "6 Portionen",
+    "prepMinutes": 75,
+    "cookMinutes": 45,
+    "totalMinutes": 75,
+    "ingredientLines": [
+      "1 kg Rinderbraten",
+      "500 ml Essigwasser"
+    ],
+    "steps": [
+      "Braten beizen.",
+      "Schmoren."
+    ]
+  },
+  "scones.html": {
+    "title": "Scones",
+    "servings": "8 scones",
+    "prepMinutes": null,
+    "cookMinutes": null,
+    "totalMinutes": null,
+    "ingredientLines": [
+      "250 g flour",
+      "50 g butter"
+    ],
+    "steps": [
+      "Rub in the butter.",
+      "Bake for 15 minutes."
+    ]
+  },
+  "semmelknoedel.html": {
+    "title": "Semmelknödel",
+    "servings": "6",
+    "prepMinutes": null,
+    "cookMinutes": null,
+    "totalMinutes": null,
+    "ingredientLines": [
+      "8 Brötchen",
+      "250 ml Milch",
+      "2 Eier"
+    ],
+    "steps": [
+      "Brötchen in Milch einweichen.",
+      "Mit Eiern mischen, formen und 20 Minuten ziehen lassen."
+    ]
+  },
+  "spaetzle.html": {
+    "title": "Käsespätzle",
+    "servings": "4 Portionen",
+    "prepMinutes": 20,
+    "cookMinutes": 25,
+    "totalMinutes": 45,
+    "ingredientLines": [
+      "400 g Spätzle",
+      "200 g Bergkäse",
+      "2 Zwiebeln",
+      "2 EL Butter"
+    ],
+    "steps": [
+      "Zwiebeln in Butter goldbraun braten.",
+      "Spätzle mit Käse schichten.",
+      "Im Ofen überbacken und mit Zwiebeln servieren."
+    ]
+  },
+  "toast.html": {
+    "title": "Käse & Schinken Toast",
+    "servings": "2",
+    "prepMinutes": null,
+    "cookMinutes": null,
+    "totalMinutes": null,
+    "ingredientLines": [
+      "2 Scheiben Toast",
+      "2 Scheiben Käse",
+      "1 Scheibe Schinken"
+    ],
+    "steps": [
+      "Toast belegen.\nIm Ofen überbacken.",
+      "Heiß servieren.",
+      "Guten Appetit"
+    ]
+  },
+  "tomatensuppe.html": {
+    "title": "Tomatensuppe",
+    "servings": "4 Portionen",
+    "prepMinutes": 10,
+    "cookMinutes": 25,
+    "totalMinutes": 35,
+    "ingredientLines": [
+      "1 kg Tomaten",
+      "1 Zwiebel",
+      "1 Knoblauchzehe",
+      "200 ml Sahne"
+    ],
+    "steps": [
+      "Tomaten und Zwiebel grob schneiden und andünsten.",
+      "Pürieren und Sahne einrühren."
+    ]
+  },
+  "zwiebelkuchen.html": {
+    "title": "Zwiebelkuchen",
+    "servings": "8 Stücke",
+    "prepMinutes": 30,
+    "cookMinutes": 45,
+    "totalMinutes": null,
+    "ingredientLines": [
+      "1 kg Zwiebeln",
+      "200 g Speck",
+      "3 Eier"
+    ],
+    "steps": [
+      "Zwiebeln und Speck andünsten.",
+      "Mit Eiern auf den Teig geben und backen."
+    ]
+  }
+}

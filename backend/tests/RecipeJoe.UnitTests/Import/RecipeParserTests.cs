@@ -98,6 +98,32 @@ public sealed class RecipeParserTests
     }
 
     [TestMethod]
+    public void An_absurdly_large_worded_duration_is_ignored()
+    {
+        var html = Page("""{"@type":"Recipe","name":"X","prepTime":"99999999999999 Std","recipeIngredient":["a"]}""");
+
+        Assert.IsNull(RecipeParser.Parse(html, PageUrl).Value.PrepTime);
+    }
+
+    [TestMethod]
+    public void A_self_referencing_step_list_terminates()
+    {
+        var html = Page(
+            """[{"@type":"Recipe","name":"X","recipeIngredient":["a"],"recipeInstructions":[{"@id":"#a"}]},{"@id":"#a","itemListElement":[{"@id":"#a"}]}]"""
+        );
+
+        Assert.IsTrue(RecipeParser.Parse(html, PageUrl).IsSuccess);
+    }
+
+    [TestMethod]
+    public void Falls_back_to_the_step_name_when_the_text_is_empty()
+    {
+        var html = Page("""{"@type":"Recipe","name":"X","recipeInstructions":[{"@type":"HowToStep","name":"Rühren","text":""}]}""");
+
+        Assert.AreEqual("Rühren", RecipeParser.Parse(html, PageUrl).Value.Steps.Single());
+    }
+
+    [TestMethod]
     [DataRow("<html><body>Kein Rezept</body></html>", DisplayName = "no ld+json")]
     [DataRow("""<script type="application/ld+json">{"@type":"Article","name":"X"}</script>""", DisplayName = "no Recipe node")]
     [DataRow("""<script type="application/ld+json">{"@type":"Recipe","recipeIngredient":["a"]}</script>""", DisplayName = "no name")]
