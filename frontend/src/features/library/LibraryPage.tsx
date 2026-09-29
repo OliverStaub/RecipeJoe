@@ -1,6 +1,15 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ChefHatIcon, SearchIcon } from 'lucide-react';
+import { ChefHatIcon, MoreVerticalIcon, SearchIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
+import { DeleteRecipeDialog } from '@/features/delete-recipe/DeleteRecipeDialog';
 import { ImportDialog } from '@/features/import/ImportDialog';
 import { sourceHost } from '@/lib/sourceHost';
 import { useRecipes } from './api';
@@ -9,6 +18,10 @@ import { useLibrarySearch } from './useLibrarySearch';
 export function LibraryPage() {
   const { input, setInput, q } = useLibrarySearch();
   const { data: recipes, isPlaceholderData, isError } = useRecipes(q);
+  const [toDelete, setToDelete] = useState<{
+    id: number;
+    title: string;
+  } | null>(null);
 
   return (
     <main className="mx-auto max-w-2xl p-4">
@@ -54,10 +67,10 @@ export function LibraryPage() {
       )}
       <ul className="divide-y">
         {recipes?.map((recipe) => (
-          <li key={recipe.id}>
+          <li key={recipe.id} className="flex items-center gap-1">
             <Link
               to={`/recipes/${recipe.id}`}
-              className="flex items-center gap-3 py-2"
+              className="flex min-w-0 flex-1 items-center gap-3 py-2"
             >
               {recipe.hasImage ? (
                 <img
@@ -79,9 +92,23 @@ export function LibraryPage() {
                 </span>
               </span>
             </Link>
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={<Button variant="ghost" size="icon" />}
+                aria-label="Mehr"
+              >
+                <MoreVerticalIcon />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setToDelete(recipe)}>
+                  Löschen
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </li>
         ))}
       </ul>
+      <DeleteRecipeDialog recipe={toDelete} onClose={() => setToDelete(null)} />
     </main>
   );
 }

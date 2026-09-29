@@ -1,4 +1,5 @@
-import { Link, useParams } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeftIcon, MoreVerticalIcon, UsersIcon } from 'lucide-react';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { Badge } from '@/components/ui/badge';
@@ -9,6 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { DeleteRecipeDialog } from '@/features/delete-recipe/DeleteRecipeDialog';
 import { sourceHost } from '@/lib/sourceHost';
 import { useRecipe } from './api';
 import { formatDuration } from './formatDuration';
@@ -25,6 +27,8 @@ export function CookViewPage() {
   const { data: recipe, isPending, isError } = useRecipe(id);
   const invalid = !Number.isInteger(id);
   const wakeLock = useWakeLock();
+  const navigate = useNavigate();
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const times = [
     ['Vorbereitung', recipe?.prepMinutes],
     ['Kochen', recipe?.cookMinutes],
@@ -65,6 +69,9 @@ export function CookViewPage() {
                   }
                 >
                   Quelle öffnen
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setConfirmingDelete(true)}>
+                  Löschen
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -138,6 +145,11 @@ export function CookViewPage() {
           </article>
         )}
       </main>
+      <DeleteRecipeDialog
+        recipe={confirmingDelete && recipe ? recipe : null}
+        onClose={() => setConfirmingDelete(false)}
+        onDeleted={() => void navigate('/')}
+      />
     </>
   );
 }

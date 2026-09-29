@@ -46,6 +46,18 @@ internal static class RecipeEndpoints
             .Produces<RecipeDto>()
             .Produces(StatusCodes.Status404NotFound);
 
+        app.MapDelete(
+                "/api/recipes/{id:int}",
+                async (int id, RecipeJoeDbContext db, CancellationToken cancellationToken) =>
+                    // Lines, Steps and the image cascade in the database.
+                    await db.Recipes.Where(r => r.Id == id).ExecuteDeleteAsync(cancellationToken) == 0
+                        ? Results.NotFound()
+                        : Results.NoContent()
+            )
+            .WithName("DeleteRecipe")
+            .Produces(StatusCodes.Status204NoContent)
+            .Produces(StatusCodes.Status404NotFound);
+
         return app;
     }
 

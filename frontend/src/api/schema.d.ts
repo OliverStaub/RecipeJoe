@@ -46,7 +46,7 @@ export interface paths {
     get: operations['GetRecipe'];
     put?: never;
     post?: never;
-    delete?: never;
+    delete: operations['DeleteRecipe'];
     options?: never;
     head?: never;
     patch?: never;
@@ -208,6 +208,33 @@ export interface operations {
         content: {
           'application/json': components['schemas']['RecipeDto'];
         };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  DeleteRecipe: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description No Content */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
       };
       /** @description Not Found */
       404: {

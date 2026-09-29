@@ -6,14 +6,14 @@
 
 **Blocked by:** 14 (Complete Cook View), 15 (Library list + search)
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] `DELETE /api/recipes/{id}`: `204`; `404`; Lines, Steps and image are deleted with the Recipe
-- [ ] `useDeleteRecipe()`: invalidates the Library and removes the cached Recipe
-- [ ] ⋮ → "Löschen" in Library rows and in the Cook View
+- [x] `DELETE /api/recipes/{id}`: `204`; `404`; Lines, Steps and image are deleted with the Recipe
+- [x] `useDeleteRecipe()`: invalidates the Library and removes the cached Recipe
+- [x] ⋮ → "Löschen" in Library rows and in the Cook View
   - `AlertDialog` „„{title}" löschen? Das kann nicht rückgängig gemacht werden." with "Löschen" / "Abbrechen"
   - toast "Rezept gelöscht"
   - from the Cook View, go back to the Library
-- [ ] Integration: delete + 404
-- [ ] Vitest: delete flow
-- [ ] E2E: delete from the Library and from the Cook View
+- [x] Integration: delete + 404
+- [x] Vitest: delete flow
+- [x] E2E: delete from the Library and from the Cook View
