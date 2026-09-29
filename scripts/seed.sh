@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Dev only: import every fixture recipe through the running API (never run automatically).
-# Needs `just dev-db` (fixtures on :8081) and `just dev-api`.
+# Run via `just seed` (starts fixtures on :8081) while `just dev` is running.
 set -euo pipefail
 
 api="${SEED_API:-http://localhost:${API_PORT:-5080}}"
@@ -8,9 +8,9 @@ fixtures_url="${SEED_FIXTURES_URL:-http://localhost:8081}"
 root="$(cd "$(dirname "$0")/.." && pwd)"
 
 existing=$(curl -fsS "$api/api/recipes" | jq length) \
-    || { echo "seed: API not reachable at $api (run 'just dev-api')" >&2; exit 1; }
+    || { echo "seed: API not reachable at $api (run 'just dev')" >&2; exit 1; }
 if [ "$existing" -ne 0 ]; then
-    echo "seed: Library already has $existing recipes; start fresh with 'just reset && just dev-db'" >&2
+    echo "seed: Library already has $existing recipes; start fresh with 'just down -v && just dev'" >&2
     exit 1
 fi
 

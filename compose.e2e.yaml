@@ -1,0 +1,9 @@
+# E2E override for `just test-e2e`: the backend imports from the fixtures site.
+services:
+  backend:
+    environment:
+      # Reachable as http://fixtures (port 80 inside the compose network); exempt from the SSRF guard.
+      Import__AllowedHosts__0: fixtures
+    depends_on:
+      fixtures:
+        condition: service_healthy

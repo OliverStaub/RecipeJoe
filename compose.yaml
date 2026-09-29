@@ -17,7 +17,9 @@ services:
       timeout: 3s
       retries: 30
 
+  # Saved recipe pages for Import: E2E (see compose.e2e.yaml) and `just seed` only.
   fixtures:
+    profiles: [fixtures]
     image: nginx:1.29-alpine
     volumes:
       - ./fixtures:/usr/share/nginx/html:ro
@@ -37,8 +39,6 @@ services:
       interval: 2s
       timeout: 3s
       retries: 15
-    # Reachable as http://fixtures from the backend container (Import__AllowedHosts__0=fixtures).
-    # Hostname only; the port stays 80 inside the compose network.
 
   backend:
     profiles: [app]
@@ -46,13 +46,10 @@ services:
       context: ./backend
     environment:
       ConnectionStrings__Db: Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
-      Import__AllowedHosts__0: fixtures
     ports:
       - '127.0.0.1:${API_PORT:-5080}:8080'
     depends_on:
       postgres:
-        condition: service_healthy
-      fixtures:
         condition: service_healthy
     healthcheck:
       test: ['CMD', 'curl', '-fsS', 'http://127.0.0.1:8080/health']

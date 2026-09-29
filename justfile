@@ -5,6 +5,7 @@ set dotenv-load
 set shell := ["bash", "-euo", "pipefail", "-c"]
 
 sln := "RecipeJoe.slnx"
+e2e_compose := "docker compose -f compose.yaml -f compose.e2e.yaml --profile app --profile fixtures"
 prettier := justfile_directory() / "frontend/node_modules/.bin/prettier"
 # Root-level YAML/JSON (compose, CI, Renovate, Claude settings), formatted with the frontend's Prettier.
 root_globs := "*.{json,yml,yaml} .github/**/*.{yml,yaml} .claude/*.json docker/**/*.{json,yml,yaml}"
@@ -26,38 +27,33 @@ setup:
 
 # --- develop -----------------------------------------------------------------
 
-# Postgres + fixtures site for local development.
-dev-db:
-    docker compose up -d --wait postgres fixtures
-
-# API with hot reload against the dev database (http://localhost:5080).
-[working-directory('backend')]
-dev-api *args:
+# Postgres + API with hot reload (:5080) + Vite; Ctrl-C stops all three, data survives.
+dev:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    docker compose up -d --wait postgres
+    (cd frontend && exec node_modules/.bin/vite) &
+    web=$!
+    trap 'kill $web 2>/dev/null || true; docker compose stop postgres' EXIT
+    # The API runs in the foreground: background jobs ignore SIGINT, so only it gets Ctrl-C; the trap stops the rest.
+    cd backend
     ConnectionStrings__Db="Host=localhost;Port=${POSTGRES_PORT:-5432};Database=$POSTGRES_DB;Username=$POSTGRES_USER;Password=$POSTGRES_PASSWORD" \
-        dotnet watch --project src/RecipeJoe.Api "$@"
+        dotnet watch --project src/RecipeJoe.Api
 
-# Vite dev server, proxies /api to the API.
-[working-directory('frontend')]
-dev-web *args:
-    npm run dev -- "$@"
-
-# Import every fixture recipe into an empty dev Library (needs dev-db and dev-api).
+# Import every fixture recipe into an empty dev Library (needs `just dev`); fixtures run only meanwhile.
 seed:
-    scripts/seed.sh
+    docker compose --profile fixtures up -d --wait fixtures
+    trap 'docker compose --profile fixtures stop fixtures' EXIT; scripts/seed.sh
 
 # --- full stack --------------------------------------------------------------
 
-# Build and start postgres, fixtures, backend and web.
+# Build and (re)start postgres, backend and web (http://localhost:8080).
 up:
     docker compose --profile app up -d --build --wait
 
-# Stop the full stack.
-down:
-    docker compose --profile app down
-
-# Stop everything and delete the database volume.
-reset:
-    docker compose --profile app down -v
+# Stop every container; `just down -v` also deletes the database volume.
+down *args:
+    docker compose --profile app --profile fixtures down "$@"
 
 # --- build / format / lint ---------------------------------------------------
 
@@ -108,21 +104,21 @@ test-contract *args:
     dotnet test --project tests/RecipeJoe.ContractTests "$@"
     cd ../frontend && npm run check:api
 
-# Fresh stack, then Playwright against it.
-test-e2e *args: reset up
+# Fresh stack plus the fixtures site (compose.e2e.yaml), then Playwright against it.
+test-e2e *args:
+    {{ e2e_compose }} down -v
+    {{ e2e_compose }} up -d --build --wait
     cd e2e && npx playwright test "$@"
 
 # --- coverage ----------------------------------------------------------------
+# The 80 % line gate applies only when CI is set: `CI=1 just cov-backend`.
 
-# Tests with coverage. The 80 % line gate applies only when CI is set: `CI=1 just cov`.
-cov: cov-backend cov-frontend
-
-# Unit + integration coverage merged by ReportGenerator.
+# Unit + integration tests with coverage merged by ReportGenerator (extra args go to dotnet test).
 [working-directory('backend')]
-cov-backend:
+cov-backend *args:
     rm -rf TestResults/coverage CoverageReport
     for project in UnitTests IntegrationTests; do \
-        dotnet test --project tests/RecipeJoe.$project \
+        dotnet test --project tests/RecipeJoe.$project "$@" \
             --coverage --coverage-output-format cobertura \
             --coverage-settings CodeCoverage.config \
             --results-directory TestResults/coverage; \
