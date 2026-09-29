@@ -1,3 +1,5 @@
+using RecipeJoe.Api.Images;
+
 namespace RecipeJoe.Api.Recipes;
 
 internal sealed class Recipe
@@ -21,6 +23,9 @@ internal sealed class Recipe
     public List<IngredientLine> IngredientLines { get; } = [];
 
     public List<Step> Steps { get; } = [];
+
+    /// <summary>Never loaded with the Recipe; query <see cref="RecipeJoeDbContext.RecipeImages"/> or project `Image != null`.</summary>
+    public RecipeImage? Image { get; set; }
 }
 
 internal sealed class IngredientLine

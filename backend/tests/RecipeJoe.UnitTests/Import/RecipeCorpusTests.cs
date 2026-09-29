@@ -44,6 +44,7 @@ public sealed class RecipeCorpusTests
         Assert.AreEqual(Minutes(expected.TotalMinutes), recipe.TotalTime);
         CollectionAssert.AreEqual(expected.IngredientLines, recipe.IngredientLines.ToArray());
         CollectionAssert.AreEqual(expected.Steps, recipe.Steps.ToArray());
+        Assert.AreEqual(expected.ImageUrl, recipe.ImageUrl?.AbsoluteUri);
     }
 
     [TestMethod]
@@ -68,6 +69,7 @@ public sealed class RecipeCorpusTests
         int? CookMinutes,
         int? TotalMinutes,
         string[] IngredientLines,
-        string[] Steps
+        string[] Steps,
+        string? ImageUrl
     );
 }

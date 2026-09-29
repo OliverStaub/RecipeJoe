@@ -7,5 +7,6 @@ internal sealed record ParsedRecipe(
     TimeSpan? CookTime,
     TimeSpan? TotalTime,
     IReadOnlyList<string> IngredientLines,
-    IReadOnlyList<string> Steps
+    IReadOnlyList<string> Steps,
+    Uri? ImageUrl
 );

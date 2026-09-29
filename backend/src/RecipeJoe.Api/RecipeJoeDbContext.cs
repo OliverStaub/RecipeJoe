@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using RecipeJoe.Api.Images;
 using RecipeJoe.Api.Recipes;
 
 namespace RecipeJoe.Api;
@@ -6,6 +7,8 @@ namespace RecipeJoe.Api;
 internal sealed class RecipeJoeDbContext(DbContextOptions<RecipeJoeDbContext> options) : DbContext(options)
 {
     public DbSet<Recipe> Recipes => Set<Recipe>();
+
+    public DbSet<RecipeImage> RecipeImages => Set<RecipeImage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -42,6 +45,16 @@ internal sealed class RecipeJoeDbContext(DbContextOptions<RecipeJoeDbContext> op
 
             recipe.Navigation(r => r.IngredientLines).AutoInclude();
             recipe.Navigation(r => r.Steps).AutoInclude();
+        });
+
+        modelBuilder.Entity<RecipeImage>(image =>
+        {
+            image.ToTable("RecipeImages");
+            image.HasKey(i => i.RecipeId);
+            image.Property(i => i.RecipeId).ValueGeneratedNever();
+            image.Property(i => i.ContentType).IsRequired();
+            image.Property(i => i.Bytes).IsRequired();
+            image.HasOne<Recipe>().WithOne(r => r.Image).HasForeignKey<RecipeImage>(i => i.RecipeId).OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

@@ -6,16 +6,16 @@
 
 **Blocked by:** 10 (Import from the UI → basic Cook View)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Parser image candidate: resolve `@id` → first array element → `url ?? contentUrl` → resolve against the page URL
-- [ ] 1:1 `RecipeImages` table (`bytea`, `ContentType`) + migration; cascade delete; not loaded with the Recipe
-- [ ] The Importer downloads the first candidate via `IPageFetcher`
+- [x] Parser image candidate: resolve `@id` → first array element → `url ?? contentUrl` → resolve against the page URL
+- [x] 1:1 `RecipeImages` table (`bytea`, `ContentType`) + migration; cascade delete; not loaded with the Recipe
+- [x] The Importer downloads the first candidate via `IPageFetcher`
   - ≤ 5 MB; jpeg/png/webp/gif by magic bytes; stored as-is
   - any failure → Recipe saved without an image, failure logged
-- [ ] `GET /api/recipes/{id}/image`: stored bytes + type, `Cache-Control: public, max-age=31536000, immutable`; `404` if there is none
-- [ ] The backend sets `imageUrl` in the Recipe DTO; `hasImage` is ready for the summary
-- [ ] Fixture placeholder images (mostly JPEG; one PNG, one WebP, one GIF); one Recipe without an image, one with a 404 image URL
-- [ ] Cook View shows the image in a 4:3 `AspectRatio`, omitted if there is none
-- [ ] Unit: oversize and bad magic bytes (generated in tests), 404, no image
-- [ ] Integration: image endpoint bytes, type, cache header, 404
+- [x] `GET /api/recipes/{id}/image`: stored bytes + type, `Cache-Control: public, max-age=31536000, immutable`; `404` if there is none
+- [x] The backend sets `imageUrl` in the Recipe DTO; `hasImage` is ready for the summary
+- [x] Fixture placeholder images (mostly JPEG; one PNG, one WebP, one GIF); one Recipe without an image, one with a 404 image URL
+- [x] Cook View shows the image in a 4:3 `AspectRatio`, omitted if there is none
+- [x] Unit: oversize and bad magic bytes (generated in tests), 404, no image
+- [x] Integration: image endpoint bytes, type, cache header, 404

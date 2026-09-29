@@ -2,6 +2,7 @@ using System.Reflection;
 using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 using RecipeJoe.Api;
+using RecipeJoe.Api.Images;
 using RecipeJoe.Api.Import;
 using RecipeJoe.Api.Recipes;
 
@@ -20,6 +21,7 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 builder.Services.AddDbContext<RecipeJoeDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Db")));
 
+builder.Services.AddImages();
 builder.Services.AddImport();
 
 builder.Services.AddOpenApi();
@@ -40,6 +42,7 @@ app.MapOpenApi();
 app.MapHealthChecks("/health");
 app.MapImportEndpoints();
 app.MapRecipeEndpoints();
+app.MapImageEndpoints();
 
 app.Run();
 

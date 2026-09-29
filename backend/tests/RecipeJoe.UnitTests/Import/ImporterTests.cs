@@ -1,5 +1,8 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 using RecipeJoe.Api;
+using RecipeJoe.Api.Images;
 using RecipeJoe.Api.Import;
 
 namespace RecipeJoe.UnitTests.Import;
@@ -14,7 +17,8 @@ public sealed class ImporterTests
         var options = new DbContextOptionsBuilder<RecipeJoeDbContext>()
             .UseNpgsql("Host=unreachable.invalid;Database=none")
             .Options;
-        return new Importer(fetcher, new RecipeJoeDbContext(options), TimeProvider.System);
+        var downloader = new ImageDownloader(fetcher, Options.Create(new ImportOptions()), NullLogger<ImageDownloader>.Instance);
+        return new Importer(fetcher, downloader, new RecipeJoeDbContext(options), TimeProvider.System);
     }
 
     private sealed class StubFetcher(Result<FetchedContent, ImportFailure>? result) : IPageFetcher
@@ -26,6 +30,9 @@ public sealed class ImporterTests
             Calls++;
             return Task.FromResult(result ?? throw new InvalidOperationException("Unexpected fetch."));
         }
+
+        public Task<Result<FetchedContent, ImportFailure>> FetchImageAsync(Uri url, CancellationToken cancellationToken) =>
+            throw new InvalidOperationException("Unexpected image fetch.");
     }
 
     [TestMethod]

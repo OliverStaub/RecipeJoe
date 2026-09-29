@@ -42,7 +42,7 @@ internal static partial class RecipeParser
                 var nodes = new NodeIndex(json.RootElement);
                 foreach (var candidate in nodes.Candidates())
                 {
-                    var recipe = ToRecipe(candidate, nodes);
+                    var recipe = ToRecipe(candidate, nodes, pageUrl);
                     if (recipe is not null)
                     {
                         return Result<ParsedRecipe, ImportFailure>.Ok(recipe);
@@ -54,7 +54,7 @@ internal static partial class RecipeParser
         return Result<ParsedRecipe, ImportFailure>.Fail(ImportFailure.NoRecipe);
     }
 
-    private static ParsedRecipe? ToRecipe(JsonElement node, NodeIndex nodes)
+    private static ParsedRecipe? ToRecipe(JsonElement node, NodeIndex nodes, Uri pageUrl)
     {
         var title = Text(node, "name");
         var lines = ReadLines(node).ToList();
@@ -72,7 +72,8 @@ internal static partial class RecipeParser
             Duration(node, "cookTime"),
             Duration(node, "totalTime"),
             lines,
-            steps
+            steps,
+            ImageUrl(node, nodes, pageUrl)
         );
     }
 
@@ -260,6 +261,32 @@ internal static partial class RecipeParser
 
     private static string? RawText(JsonElement node, string property) =>
         node.TryGetProperty(property, out var value) && value.ValueKind == JsonValueKind.String ? value.GetString() : null;
+
+    /// <summary>First image candidate only: resolve @id, take the first array element, `url ?? contentUrl`, resolve against the page.</summary>
+    private static Uri? ImageUrl(JsonElement node, NodeIndex nodes, Uri pageUrl)
+    {
+        if (!node.TryGetProperty("image", out var image))
+        {
+            return null;
+        }
+
+        image = nodes.Resolve(image);
+        if (image.ValueKind == JsonValueKind.Array)
+        {
+            image = image.EnumerateArray().FirstOrDefault();
+            image = nodes.Resolve(image);
+        }
+
+        var raw = image.ValueKind switch
+        {
+            JsonValueKind.String => image.GetString(),
+            JsonValueKind.Object => RawText(image, "url") ?? RawText(image, "contentUrl"),
+            _ => null,
+        };
+
+        raw = raw?.Trim();
+        return !string.IsNullOrEmpty(raw) && Uri.TryCreate(pageUrl, raw, out var url) && url.Scheme is "http" or "https" ? url : null;
+    }
 
     private static string? Servings(JsonElement node)
     {

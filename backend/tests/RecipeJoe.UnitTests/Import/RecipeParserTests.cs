@@ -136,4 +136,52 @@ public sealed class RecipeParserTests
         Assert.IsFalse(result.IsSuccess);
         Assert.AreEqual(ImportFailure.NoRecipe, result.Failure);
     }
+
+    private static Uri? ImageOf(string imageJson, string id = "") =>
+        RecipeParser
+            .Parse(
+                Page(
+                    $$"""
+                    {"@context":"https://schema.org","@graph":[{{id}}{"@type":"Recipe","name":"X","recipeIngredient":["a"],"image":{{imageJson}}}]}
+                    """
+                ),
+                PageUrl
+            )
+            .Value.ImageUrl;
+
+    [TestMethod]
+    [DataRow("\"https://cdn.test/a.jpg\"", "https://cdn.test/a.jpg")]
+    [DataRow("\"/bilder/a.jpg\"", "https://example.test/bilder/a.jpg")]
+    [DataRow("\"a.jpg\"", "https://example.test/a.jpg")]
+    [DataRow("\"//cdn.test/a.jpg\"", "https://cdn.test/a.jpg")]
+    [DataRow("[\"https://cdn.test/1.jpg\",\"https://cdn.test/2.jpg\"]", "https://cdn.test/1.jpg")]
+    [DataRow("{\"@type\":\"ImageObject\",\"url\":\"/u.jpg\",\"contentUrl\":\"/c.jpg\"}", "https://example.test/u.jpg")]
+    [DataRow("{\"@type\":\"ImageObject\",\"contentUrl\":\"/c.jpg\"}", "https://example.test/c.jpg")]
+    [DataRow("[{\"@type\":\"ImageObject\",\"url\":\"/u.jpg\"},\"/2.jpg\"]", "https://example.test/u.jpg")]
+    public void Resolves_the_first_image_candidate_against_the_page_url(string imageJson, string expected)
+    {
+        Assert.AreEqual(expected, ImageOf(imageJson)?.AbsoluteUri);
+    }
+
+    [TestMethod]
+    public void Resolves_an_image_given_as_an_id_reference()
+    {
+        var image = ImageOf("{\"@id\":\"#img\"}", "{\"@type\":\"ImageObject\",\"@id\":\"#img\",\"url\":\"/ref.jpg\"},");
+
+        Assert.AreEqual("https://example.test/ref.jpg", image?.AbsoluteUri);
+    }
+
+    [TestMethod]
+    [DataRow("null")]
+    [DataRow("\"\"")]
+    [DataRow("[]")]
+    [DataRow("{}")]
+    [DataRow("42")]
+    [DataRow("\"ftp://cdn.test/a.jpg\"")]
+    [DataRow("\"data:image/png;base64,AAAA\"")]
+    [DataRow("[\"\",\"https://cdn.test/2.jpg\"]")]
+    public void Has_no_image_when_the_first_candidate_is_unusable(string imageJson)
+    {
+        Assert.IsNull(ImageOf(imageJson));
+    }
 }

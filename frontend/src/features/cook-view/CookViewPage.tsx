@@ -1,5 +1,6 @@
 import { Link, useParams } from 'react-router-dom';
 import { ArrowLeftIcon } from 'lucide-react';
+import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { useRecipe } from './api';
 
 export function CookViewPage() {
@@ -22,6 +23,15 @@ export function CookViewPage() {
         <p>Rezept konnte nicht geladen werden.</p>
       ) : isPending || !recipe ? null : (
         <article className="grid gap-6">
+          {recipe.imageUrl && (
+            <AspectRatio ratio={4 / 3} className="overflow-hidden rounded-lg">
+              <img
+                src={recipe.imageUrl}
+                alt={recipe.title}
+                className="size-full object-cover"
+              />
+            </AspectRatio>
+          )}
           <h1 className="text-2xl font-semibold">{recipe.title}</h1>
           <section>
             <h2 className="mb-2 text-lg font-medium">Zutaten</h2>

@@ -16,7 +16,8 @@
       "Äpfel schälen und in Scheiben schneiden.",
       "Teig aus Mehl, Zucker, Eiern und Backpulver rühren.",
       "Äpfel unterheben und 1 Stunde bei 180 °C backen."
-    ]
+    ],
+    "imageUrl": "https://example.test/images/apfelkuchen.jpg"
   },
   "banana-bread.html": {
     "title": "Banana Bread",
@@ -32,7 +33,8 @@
     "steps": [
       "Mash the bananas.",
       "Mix with flour and sugar, then bake."
-    ]
+    ],
+    "imageUrl": "https://example.test/images/banana-bread.jpg"
   },
   "bratkartoffeln.html": {
     "title": "Bratkartoffeln",
@@ -47,7 +49,8 @@
     "steps": [
       "Kartoffeln in Scheiben schneiden.",
       "Knusprig braten."
-    ]
+    ],
+    "imageUrl": "https://example.test/images/bratkartoffeln.jpg"
   },
   "brezeln.html": {
     "title": "Laugenbrezeln",
@@ -65,7 +68,8 @@
       "Hefeteig kneten und gehen lassen.",
       "Brezeln formen und in Lauge tauchen.",
       "Mit Salz bestreuen und backen."
-    ]
+    ],
+    "imageUrl": "https://example.test/images/brezeln.png"
   },
   "flammkuchen.html": {
     "title": "Flammkuchen",
@@ -83,7 +87,8 @@
       "Teig ausrollen und mit Crème fraîche bestreichen.",
       "Mit Speck und Zwiebelringen belegen.",
       "12 Minuten bei 250 °C backen."
-    ]
+    ],
+    "imageUrl": "https://example.test/images/flammkuchen.webp"
   },
   "fried-rice.html": {
     "title": "Fried Rice",
@@ -99,7 +104,8 @@
     "steps": [
       "Cook the rice.",
       "Fry with the rest."
-    ]
+    ],
+    "imageUrl": "https://example.test/images/fried-rice.gif"
   },
   "gemuesepfanne.html": {
     "title": "Bunte Gemüsepfanne",
@@ -116,7 +122,8 @@
     "steps": [
       "Gemüse in Streifen schneiden.",
       "Im heißen Öl 10 Minuten braten."
-    ]
+    ],
+    "imageUrl": null
   },
   "griessbrei.html": {
     "title": "Grießbrei",
@@ -134,7 +141,8 @@
       "Milch aufkochen.",
       "Grieß einrühren und quellen lassen.",
       "Mit Zucker und Zimt servieren."
-    ]
+    ],
+    "imageUrl": "https://example.test/images/griessbrei.jpg"
   },
   "gulasch.html": {
     "title": "Rindergulasch",
@@ -152,7 +160,8 @@
       "Fleisch würfeln und anbraten.",
       "Zwiebeln und Paprika zugeben.",
       "Mit Brühe aufgießen und 2 Stunden schmoren."
-    ]
+    ],
+    "imageUrl": "https://example.test/images/gulasch.jpg"
   },
   "haferkekse.html": {
     "title": "Haferkekse",
@@ -168,7 +177,8 @@
     "steps": [
       "Zutaten verkneten.",
       "Kekse formen und 12 Minuten backen."
-    ]
+    ],
+    "imageUrl": "https://example.test/images/gibt-es-nicht.jpg"
   },
   "huehnersuppe.html": {
     "title": "Hühnersuppe",
@@ -185,7 +195,8 @@
       "Huhn in kaltem Wasser aufsetzen.",
       "Karotten und Lauch 1 Stunde mitköcheln.\nAbschmecken.",
       "Servieren"
-    ]
+    ],
+    "imageUrl": null
   },
   "kaesekuchen.html": {
     "title": "Käsekuchen",
@@ -203,7 +214,8 @@
       "Quark mit Zucker, Eiern und Puddingpulver verrühren.",
       "In eine Springform füllen.",
       "Bei 175 °C eine Stunde backen."
-    ]
+    ],
+    "imageUrl": null
   },
   "kaiserschmarrn.html": {
     "title": "Kaiserschmarrn",
@@ -221,7 +233,8 @@
       "Teig aus Eiern, Milch und Mehl rühren.",
       "In der Pfanne backen und in Stücke reißen.",
       "Mit Puderzucker bestäuben."
-    ]
+    ],
+    "imageUrl": null
   },
   "kartoffelsalat.html": {
     "title": "Schwäbischer Kartoffelsalat",
@@ -238,7 +251,8 @@
     "steps": [
       "Kartoffeln kochen, pellen und in Scheiben schneiden.",
       "Warme Brühe mit Essig und Zwiebel darübergießen."
-    ]
+    ],
+    "imageUrl": null
   },
   "kartoffelsuppe.html": {
     "title": "Kartoffelsuppe",
@@ -256,7 +270,8 @@
       "Kartoffeln und Zwiebel schälen und würfeln.",
       "In der Brühe 30 Minuten weich kochen.",
       "Pürieren und abschmecken."
-    ]
+    ],
+    "imageUrl": null
   },
   "kirschtorte.html": {
     "title": "Schwarzwälder Kirschtorte",
@@ -276,7 +291,8 @@
       "Sahne steif schlagen.",
       "Kirschen abtropfen.",
       "Schichten und kühlen."
-    ]
+    ],
+    "imageUrl": null
   },
   "linsensuppe.html": {
     "title": "Linsensuppe & Würstchen",
@@ -292,7 +308,8 @@
     "steps": [
       "Linsen mit Karotten in Wasser weich kochen.",
       "Würstchen in Scheiben schneiden und kurz miterhitzen."
-    ]
+    ],
+    "imageUrl": null
   },
   "nudelsalat.html": {
     "title": "Nudelsalat",
@@ -309,7 +326,8 @@
     "steps": [
       "Nudeln kochen und abkühlen lassen.",
       "Mit Gurken, Mayonnaise und Schnittlauch mischen."
-    ]
+    ],
+    "imageUrl": null
   },
   "pfannkuchen.html": {
     "title": "Pfannkuchen",
@@ -326,7 +344,8 @@
     "steps": [
       "Teig glatt rühren und 10 Minuten ruhen lassen.",
       "In der Pfanne dünn ausbacken."
-    ]
+    ],
+    "imageUrl": null
   },
   "pizza.html": {
     "title": "Pizzateig",
@@ -341,7 +360,8 @@
     "steps": [
       "Teig kneten.",
       "Gehen lassen."
-    ]
+    ],
+    "imageUrl": null
   },
   "rahmspinat.html": {
     "title": "Rahmspinat",
@@ -358,7 +378,8 @@
     "steps": [
       "Zwiebel andünsten, Spinat zugeben.",
       "Sahne einrühren und mit Muskat würzen."
-    ]
+    ],
+    "imageUrl": null
   },
   "rotkohl.html": {
     "title": "Rotkohl",
@@ -375,7 +396,8 @@
     "steps": [
       "Kohl hobeln, Äpfel würfeln.",
       "Alles mit Wein und Zucker 1 Stunde schmoren."
-    ]
+    ],
+    "imageUrl": null
   },
   "ruehrei.html": {
     "title": "Rührei",
@@ -391,7 +413,8 @@
       "Eier verquirlen.",
       "Butter erhitzen.",
       "Eier stocken lassen und servieren."
-    ]
+    ],
+    "imageUrl": null
   },
   "sauerbraten.html": {
     "title": "Sauerbraten",
@@ -406,7 +429,8 @@
     "steps": [
       "Braten beizen.",
       "Schmoren."
-    ]
+    ],
+    "imageUrl": null
   },
   "scones.html": {
     "title": "Scones",
@@ -421,7 +445,8 @@
     "steps": [
       "Rub in the butter.",
       "Bake for 15 minutes."
-    ]
+    ],
+    "imageUrl": null
   },
   "semmelknoedel.html": {
     "title": "Semmelknödel",
@@ -437,7 +462,8 @@
     "steps": [
       "Brötchen in Milch einweichen.",
       "Mit Eiern mischen, formen und 20 Minuten ziehen lassen."
-    ]
+    ],
+    "imageUrl": null
   },
   "spaetzle.html": {
     "title": "Käsespätzle",
@@ -455,7 +481,8 @@
       "Zwiebeln in Butter goldbraun braten.",
       "Spätzle mit Käse schichten.",
       "Im Ofen überbacken und mit Zwiebeln servieren."
-    ]
+    ],
+    "imageUrl": null
   },
   "toast.html": {
     "title": "Käse & Schinken Toast",
@@ -472,7 +499,8 @@
       "Toast belegen.\nIm Ofen überbacken.",
       "Heiß servieren.",
       "Guten Appetit"
-    ]
+    ],
+    "imageUrl": null
   },
   "tomatensuppe.html": {
     "title": "Tomatensuppe",
@@ -489,7 +517,8 @@
     "steps": [
       "Tomaten und Zwiebel grob schneiden und andünsten.",
       "Pürieren und Sahne einrühren."
-    ]
+    ],
+    "imageUrl": null
   },
   "zwiebelkuchen.html": {
     "title": "Zwiebelkuchen",
@@ -505,6 +534,7 @@
     "steps": [
       "Zwiebeln und Speck andünsten.",
       "Mit Eiern auf den Teig geben und backen."
-    ]
+    ],
+    "imageUrl": null
   }
 }

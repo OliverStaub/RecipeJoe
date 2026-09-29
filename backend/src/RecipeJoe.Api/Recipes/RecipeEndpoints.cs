@@ -10,8 +10,12 @@ internal static class RecipeEndpoints
                 "/api/recipes/{id:int}",
                 async (int id, RecipeJoeDbContext db, CancellationToken cancellationToken) =>
                 {
-                    var recipe = await db.Recipes.AsNoTracking().FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
-                    return recipe is null ? Results.NotFound() : Results.Ok(RecipeDto.From(recipe));
+                    var found = await db
+                        .Recipes.AsNoTracking()
+                        .Where(r => r.Id == id)
+                        .Select(r => new { Recipe = r, HasImage = r.Image != null })
+                        .FirstOrDefaultAsync(cancellationToken);
+                    return found is null ? Results.NotFound() : Results.Ok(RecipeDto.From(found.Recipe, found.HasImage));
                 }
             )
             .WithName("GetRecipe")

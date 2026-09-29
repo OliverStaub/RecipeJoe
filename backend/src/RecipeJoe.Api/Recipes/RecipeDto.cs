@@ -14,7 +14,7 @@ internal sealed record RecipeDto(
     DateTimeOffset CreatedAt
 )
 {
-    public static RecipeDto From(Recipe recipe) =>
+    public static RecipeDto From(Recipe recipe, bool hasImage) =>
         new(
             recipe.Id,
             recipe.Title,
@@ -25,7 +25,7 @@ internal sealed record RecipeDto(
             [.. recipe.IngredientLines.OrderBy(l => l.Position).Select(l => l.Text)],
             [.. recipe.Steps.OrderBy(s => s.Position).Select(s => s.Text)],
             recipe.SourceUrl,
-            null,
+            hasImage ? $"/api/recipes/{recipe.Id}/image" : null,
             recipe.CreatedAt
         );
 

@@ -63,6 +63,57 @@ public sealed class HttpPageFetcherTests
     }
 
     [TestMethod]
+    public async Task Fetches_an_image_of_any_content_type_asking_for_images()
+    {
+        Respond("/pic", Response.Create().WithHeader("Content-Type", "image/png").WithBody([0x89, 0x50, 0x4E, 0x47]));
+
+        var result = await AllowLoopback().FetchImageAsync(Url("/pic"), CancellationToken.None);
+
+        Assert.IsTrue(result.IsSuccess);
+        CollectionAssert.AreEqual(new byte[] { 0x89, 0x50, 0x4E, 0x47 }, result.Value.Bytes);
+        Assert.AreEqual("image/png", result.Value.ContentType);
+        StringAssert.StartsWith(_server.LogEntries.Single().RequestMessage!.Headers!["Accept"].Single(), "image/*");
+    }
+
+    [TestMethod]
+    public async Task An_image_without_a_content_type_is_left_to_the_caller_to_judge()
+    {
+        Respond("/pic", Response.Create().WithBody([1, 2, 3]));
+
+        var result = await AllowLoopback().FetchImageAsync(Url("/pic"), CancellationToken.None);
+
+        Assert.IsTrue(result.IsSuccess);
+    }
+
+    [TestMethod]
+    public async Task An_image_over_the_cap_is_a_bad_response()
+    {
+        Respond("/pic", Response.Create().WithHeader("Content-Type", "image/jpeg").WithBody(new byte[2048]));
+
+        var result = await AllowLoopback(("Import:MaxBytes", "1024")).FetchImageAsync(Url("/pic"), CancellationToken.None);
+
+        Assert.AreEqual(ImportFailure.BadResponse, result.Failure);
+    }
+
+    [TestMethod]
+    public async Task A_missing_image_is_NotFound()
+    {
+        var result = await AllowLoopback().FetchImageAsync(Url("/nope"), CancellationToken.None);
+
+        Assert.AreEqual(ImportFailure.NotFound, result.Failure);
+    }
+
+    [TestMethod]
+    public async Task Images_get_the_same_address_guard_as_pages()
+    {
+        Respond("/pic", Response.Create().WithHeader("Content-Type", "image/jpeg").WithBody([0xFF, 0xD8, 0xFF]));
+
+        var result = await CreateFetcher().FetchImageAsync(Url("/pic"), CancellationToken.None);
+
+        Assert.AreEqual(ImportFailure.ForbiddenAddress, result.Failure);
+    }
+
+    [TestMethod]
     public async Task Accepts_xhtml()
     {
         Respond("/page", Response.Create().WithHeader("Content-Type", "application/xhtml+xml").WithBody("<html/>"));

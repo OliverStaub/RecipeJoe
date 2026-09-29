@@ -37,14 +37,20 @@ internal sealed class HttpPageFetcher(HttpClient client, IOptions<ImportOptions>
         client.DefaultRequestHeaders.AcceptEncoding.ParseAdd("gzip, br");
     }
 
-    public async Task<Result<FetchedContent, ImportFailure>> FetchAsync(Uri url, CancellationToken cancellationToken)
+    public Task<Result<FetchedContent, ImportFailure>> FetchAsync(Uri url, CancellationToken cancellationToken) =>
+        FetchAsync(url, expectHtml: true, cancellationToken);
+
+    public Task<Result<FetchedContent, ImportFailure>> FetchImageAsync(Uri url, CancellationToken cancellationToken) =>
+        FetchAsync(url, expectHtml: false, cancellationToken);
+
+    private async Task<Result<FetchedContent, ImportFailure>> FetchAsync(Uri url, bool expectHtml, CancellationToken cancellationToken)
     {
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         timeout.CancelAfter(_options.Timeout);
 
         try
         {
-            return await FetchFollowingRedirectsAsync(url, timeout.Token);
+            return await FetchFollowingRedirectsAsync(url, expectHtml, timeout.Token);
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
@@ -60,11 +66,17 @@ internal sealed class HttpPageFetcher(HttpClient client, IOptions<ImportOptions>
         }
     }
 
-    private async Task<Result<FetchedContent, ImportFailure>> FetchFollowingRedirectsAsync(Uri url, CancellationToken ct)
+    private async Task<Result<FetchedContent, ImportFailure>> FetchFollowingRedirectsAsync(Uri url, bool expectHtml, CancellationToken ct)
     {
         for (var redirects = 0; ; redirects++)
         {
-            using var response = await client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, ct);
+            using var request = new HttpRequestMessage(HttpMethod.Get, url);
+            if (!expectHtml)
+            {
+                request.Headers.Accept.ParseAdd("image/*,*/*;q=0.5");
+            }
+
+            using var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct);
 
             if (IsRedirect(response.StatusCode))
             {
@@ -82,11 +94,11 @@ internal sealed class HttpPageFetcher(HttpClient client, IOptions<ImportOptions>
                 continue;
             }
 
-            return await ReadAsync(response, ct);
+            return await ReadAsync(response, expectHtml, ct);
         }
     }
 
-    private async Task<Result<FetchedContent, ImportFailure>> ReadAsync(HttpResponseMessage response, CancellationToken ct)
+    private async Task<Result<FetchedContent, ImportFailure>> ReadAsync(HttpResponseMessage response, bool expectHtml, CancellationToken ct)
     {
         if (IsChallenge(response))
         {
@@ -107,7 +119,7 @@ internal sealed class HttpPageFetcher(HttpClient client, IOptions<ImportOptions>
 
         var contentType = response.Content.Headers.ContentType;
         var mediaType = contentType?.MediaType;
-        if (contentType is null || mediaType is null || !HtmlMediaTypes.Contains(mediaType, StringComparer.OrdinalIgnoreCase))
+        if (expectHtml && (mediaType is null || !HtmlMediaTypes.Contains(mediaType, StringComparer.OrdinalIgnoreCase)))
         {
             return Fail(ImportFailure.BadResponse);
         }
@@ -123,9 +135,9 @@ internal sealed class HttpPageFetcher(HttpClient client, IOptions<ImportOptions>
             return Fail(ImportFailure.BadResponse);
         }
 
-        return ContainsChallengeMarker(bytes)
+        return expectHtml && ContainsChallengeMarker(bytes)
             ? Fail(ImportFailure.Blocked)
-            : Result<FetchedContent, ImportFailure>.Ok(new FetchedContent(bytes, contentType.ToString()));
+            : Result<FetchedContent, ImportFailure>.Ok(new FetchedContent(bytes, contentType?.ToString()));
     }
 
     /// <summary>Streams the body; null when it exceeds the cap (Content-Length can be absent or a lie).</summary>

@@ -26,6 +26,12 @@ test.fixme('Import opens the Cook View with the tokenised title', async ({
     page.getByRole('heading', { name: `Testrezept ${token}` }),
   ).toBeVisible();
   await expect(page.getByText('500 g Kartoffeln')).toBeVisible();
+  // The backend downloaded /images/e2e-recipe.jpg from the fixtures site and serves it itself.
+  const image = page.getByRole('img', { name: `Testrezept ${token}` });
+  await expect(image).toBeVisible();
+  await expect
+    .poll(() => image.evaluate((img: HTMLImageElement) => img.naturalWidth))
+    .toBeGreaterThan(0);
 });
 
 test.fixme('a page without a Recipe shows its message inline', async ({

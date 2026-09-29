@@ -1,9 +1,10 @@
+using RecipeJoe.Api.Images;
 using RecipeJoe.Api.Recipes;
 
 namespace RecipeJoe.Api.Import;
 
-/// <summary>Fetch → parse → save. Nothing is persisted unless every step succeeds.</summary>
-internal sealed class Importer(IPageFetcher fetcher, RecipeJoeDbContext db, TimeProvider timeProvider)
+/// <summary>Fetch → parse → download image → save. Nothing is persisted unless the page yields a Recipe; a failed image only leaves the Recipe without one.</summary>
+internal sealed class Importer(IPageFetcher fetcher, ImageDownloader images, RecipeJoeDbContext db, TimeProvider timeProvider)
 {
     public async Task<Result<Recipe, ImportFailure>> ImportAsync(string url, CancellationToken cancellationToken)
     {
@@ -28,6 +29,7 @@ internal sealed class Importer(IPageFetcher fetcher, RecipeJoeDbContext db, Time
         }
 
         var recipe = ToEntity(parsed.Value, pageUrl);
+        recipe.Image = await images.DownloadAsync(parsed.Value.ImageUrl, cancellationToken);
         db.Recipes.Add(recipe);
         await db.SaveChangesAsync(cancellationToken);
 
