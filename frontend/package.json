@@ -11,7 +11,7 @@
     "typecheck": "tsc -b",
     "test": "vitest run",
     "cov": "vitest run --coverage",
-    "gen:api": "openapi-typescript ../backend/openapi.json -o src/api/schema.d.ts",
+    "gen:api": "openapi-typescript ../backend/openapi.json -o src/api/schema.d.ts && prettier --write src/api/schema.d.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "check:api": "npm run gen:api && git diff --exit-code -- src/api/schema.d.ts ../backend/openapi.json && tsc --noEmit -p tsconfig.app.json"
@@ -37,6 +37,8 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@stryker-mutator/core": "^10.0.0",
+    "@stryker-mutator/vitest-runner": "^10.0.0",
     "@tailwindcss/vite": "^4.3.3",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
