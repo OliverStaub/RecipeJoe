@@ -43,7 +43,7 @@ public sealed class ImageDownloaderTests
     }
 
     private static ImageStub Serving(byte[] bytes, string? contentType = "image/jpeg") =>
-        new(Result<FetchedContent, ImportFailure>.Ok(new FetchedContent(bytes, contentType)));
+        new(Result<FetchedContent, ImportFailure>.Ok(new FetchedContent(bytes, contentType, new Uri("http://cdn.test/x"))));
 
     [TestMethod]
     public async Task Downloads_the_image_from_the_url_and_stores_it_as_is()

@@ -1,9 +1,8 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using RecipeJoe.Api;
+using RecipeJoe.Api.Recipes;
 
 namespace RecipeJoe.IntegrationTests;
 
@@ -75,6 +74,19 @@ public sealed class RecipeImageTests
     }
 
     [TestMethod]
+    public async Task A_recipe_imported_through_a_redirect_resolves_its_relative_image_against_the_final_page()
+    {
+        var client = _factory.CreateClient();
+        var response = await client.PostAsJsonAsync("/api/recipes/import", new { url = "http://short.test/apfelkuchen" });
+        Assert.AreEqual(HttpStatusCode.Created, response.StatusCode);
+        var id = (await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
+
+        var image = await client.GetAsync($"/api/recipes/{id}/image");
+
+        Assert.AreEqual(HttpStatusCode.OK, image.StatusCode);
+    }
+
+    [TestMethod]
     [DataRow("kartoffelsuppe.html", DisplayName = "no image")]
     [DataRow("haferkekse.html", DisplayName = "image url that 404s")]
     public async Task A_recipe_without_a_usable_image_is_still_imported_and_has_no_image(string page)
@@ -102,11 +114,11 @@ public sealed class RecipeImageTests
         var id = await ImportAsync(_factory.CreateClient(), "apfelkuchen.html");
 
         using var scope = _factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<RecipeJoeDbContext>();
-        Assert.AreEqual(1, await db.RecipeImages.CountAsync());
+        var library = scope.ServiceProvider.GetRequiredService<Library>();
+        Assert.IsNotNull(await library.GetImageAsync(id, CancellationToken.None));
 
-        await db.Recipes.Where(r => r.Id == id).ExecuteDeleteAsync();
+        await library.DeleteAsync(id, CancellationToken.None);
 
-        Assert.AreEqual(0, await db.RecipeImages.CountAsync());
+        Assert.IsNull(await library.GetImageAsync(id, CancellationToken.None));
     }
 }

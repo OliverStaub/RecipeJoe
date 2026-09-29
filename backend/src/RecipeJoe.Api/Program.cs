@@ -21,6 +21,7 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 builder.Services.AddDbContext<RecipeJoeDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Db")));
 
+builder.Services.AddLibrary();
 builder.Services.AddImages();
 builder.Services.AddImport();
 

@@ -7,13 +7,14 @@ namespace RecipeJoe.UnitTests.Import;
 public sealed class PageDecoderTests
 {
     private static readonly Encoding Latin1 = Encoding.Latin1;
+    private static readonly Uri PageUrl = new("http://fixtures.test/x");
 
     [TestMethod]
     public void Uses_the_charset_from_the_header()
     {
         var bytes = Latin1.GetBytes("<p>Käse</p>");
 
-        Assert.AreEqual("<p>Käse</p>", PageDecoder.Decode(new FetchedContent(bytes, "text/html; charset=iso-8859-1")));
+        Assert.AreEqual("<p>Käse</p>", PageDecoder.Decode(new FetchedContent(bytes, "text/html; charset=iso-8859-1", PageUrl)));
     }
 
     [TestMethod]
@@ -22,7 +23,7 @@ public sealed class PageDecoderTests
         var bytes = Latin1.GetBytes("<meta charset=\"utf-8\"><p>Käse</p>");
 
         StringAssert.Contains(
-            PageDecoder.Decode(new FetchedContent(bytes, "text/html; charset=ISO-8859-1")),
+            PageDecoder.Decode(new FetchedContent(bytes, "text/html; charset=ISO-8859-1", PageUrl)),
             "Käse"
         );
     }
@@ -34,7 +35,7 @@ public sealed class PageDecoderTests
     {
         var bytes = Latin1.GetBytes($"<html><head>{meta}</head><p>Käse</p>");
 
-        StringAssert.Contains(PageDecoder.Decode(new FetchedContent(bytes, "text/html")), "Käse");
+        StringAssert.Contains(PageDecoder.Decode(new FetchedContent(bytes, "text/html", PageUrl)), "Käse");
     }
 
     [TestMethod]
@@ -42,7 +43,7 @@ public sealed class PageDecoderTests
     {
         var bytes = Encoding.UTF8.GetBytes("<p>Käse</p>");
 
-        Assert.AreEqual("<p>Käse</p>", PageDecoder.Decode(new FetchedContent(bytes, null)));
+        Assert.AreEqual("<p>Käse</p>", PageDecoder.Decode(new FetchedContent(bytes, null, PageUrl)));
     }
 
     [TestMethod]
@@ -50,6 +51,6 @@ public sealed class PageDecoderTests
     {
         var bytes = Encoding.UTF8.GetBytes("<p>Käse</p>");
 
-        Assert.AreEqual("<p>Käse</p>", PageDecoder.Decode(new FetchedContent(bytes, "text/html; charset=nonsense")));
+        Assert.AreEqual("<p>Käse</p>", PageDecoder.Decode(new FetchedContent(bytes, "text/html; charset=nonsense", PageUrl)));
     }
 }

@@ -24,7 +24,7 @@ internal sealed class Recipe
 
     public List<Step> Steps { get; } = [];
 
-    /// <summary>Never loaded with the Recipe; query <see cref="RecipeJoeDbContext.RecipeImages"/> or project `Image != null`.</summary>
+    /// <summary>Never loaded with the Recipe; <see cref="Library"/> projects `Image != null` or loads the bytes on their own.</summary>
     public RecipeImage? Image { get; set; }
 }
 

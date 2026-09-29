@@ -1,46 +1,22 @@
-using Microsoft.EntityFrameworkCore;
-
 namespace RecipeJoe.Api.Recipes;
 
 internal static class RecipeEndpoints
 {
+    public static IServiceCollection AddLibrary(this IServiceCollection services) => services.AddScoped<Library>();
+
     public static IEndpointRouteBuilder MapRecipeEndpoints(this IEndpointRouteBuilder app)
     {
         app.MapGet(
                 "/api/recipes",
-                async (string? q, RecipeJoeDbContext db, CancellationToken cancellationToken) =>
-                {
-                    var recipes = db.Recipes.AsNoTracking();
-                    foreach (var token in Tokens(q))
-                    {
-                        var pattern = $"%{EscapeLike(token)}%";
-                        recipes = recipes.Where(r =>
-                            EF.Functions.ILike(r.Title, pattern, "\\")
-                            || r.IngredientLines.Any(l => EF.Functions.ILike(l.Text, pattern, "\\"))
-                        );
-                    }
-
-                    return await recipes
-                        .OrderByDescending(r => r.CreatedAt)
-                        .ThenByDescending(r => r.Id)
-                        .Select(r => new RecipeSummaryDto(r.Id, r.Title, r.SourceUrl, r.Image != null))
-                        .ToListAsync(cancellationToken);
-                }
+                (string? q, Library library, CancellationToken cancellationToken) => library.SearchAsync(q, cancellationToken)
             )
             .WithName("ListRecipes")
             .Produces<List<RecipeSummaryDto>>();
 
         app.MapGet(
                 "/api/recipes/{id:int}",
-                async (int id, RecipeJoeDbContext db, CancellationToken cancellationToken) =>
-                {
-                    var found = await db
-                        .Recipes.AsNoTracking()
-                        .Where(r => r.Id == id)
-                        .Select(r => new { Recipe = r, HasImage = r.Image != null })
-                        .FirstOrDefaultAsync(cancellationToken);
-                    return found is null ? Results.NotFound() : Results.Ok(RecipeDto.From(found.Recipe, found.HasImage));
-                }
+                async (int id, Library library, CancellationToken cancellationToken) =>
+                    await library.GetAsync(id, cancellationToken) is { } recipe ? Results.Ok(recipe) : Results.NotFound()
             )
             .WithName("GetRecipe")
             .Produces<RecipeDto>()
@@ -48,11 +24,8 @@ internal static class RecipeEndpoints
 
         app.MapDelete(
                 "/api/recipes/{id:int}",
-                async (int id, RecipeJoeDbContext db, CancellationToken cancellationToken) =>
-                    // Lines, Steps and the image cascade in the database.
-                    await db.Recipes.Where(r => r.Id == id).ExecuteDeleteAsync(cancellationToken) == 0
-                        ? Results.NotFound()
-                        : Results.NoContent()
+                async (int id, Library library, CancellationToken cancellationToken) =>
+                    await library.DeleteAsync(id, cancellationToken) ? Results.NoContent() : Results.NotFound()
             )
             .WithName("DeleteRecipe")
             .Produces(StatusCodes.Status204NoContent)
@@ -60,12 +33,4 @@ internal static class RecipeEndpoints
 
         return app;
     }
-
-    private static string[] Tokens(string? q) =>
-        q is null ? [] : q.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
-
-    private static string EscapeLike(string token) =>
-        token.Replace("\\", "\\\\", StringComparison.Ordinal)
-            .Replace("%", "\\%", StringComparison.Ordinal)
-            .Replace("_", "\\_", StringComparison.Ordinal);
 }

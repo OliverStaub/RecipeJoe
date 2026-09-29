@@ -28,6 +28,10 @@ _Avoid_: Origin, URL
 Fetching a page at a URL, parsing its embedded schema.org/Recipe structured data, and creating a Recipe from it. Only understands standard structured data — never bespoke per-site scraping.
 _Avoid_: Scrape, Ingest
 
+**Recipe Draft**:
+A Recipe that is not yet in the Library, e.g. what an Import produces. Saving it adds it to the Library. After a redirect, its Source is the page the Recipe was actually found on.
+_Avoid_: Parsed recipe, Candidate
+
 **Library**:
 The full set of a user's saved Recipes — what the searchable list screen shows.
 _Avoid_: Collection, Catalog

@@ -3,54 +3,45 @@ using RecipeJoe.Api.Recipes;
 
 namespace RecipeJoe.Api.Import;
 
-/// <summary>Fetch → parse → download image → save. Nothing is persisted unless the page yields a Recipe; a failed image only leaves the Recipe without one.</summary>
-internal sealed class Importer(IPageFetcher fetcher, ImageDownloader images, RecipeJoeDbContext db, TimeProvider timeProvider)
+/// <summary>URL → Recipe draft: fetch → decode → parse → download image. Persists nothing; relative links resolve against the page after redirects, which is also the draft's Source. A failed image only leaves the draft without one.</summary>
+internal sealed class Importer(IPageFetcher fetcher, ImageDownloader images)
 {
-    public async Task<Result<Recipe, ImportFailure>> ImportAsync(string url, CancellationToken cancellationToken)
+    public async Task<Result<RecipeDraft, ImportFailure>> ImportAsync(string url, CancellationToken cancellationToken)
     {
         if (
             !Uri.TryCreate(url, UriKind.Absolute, out var pageUrl)
             || (pageUrl.Scheme != Uri.UriSchemeHttp && pageUrl.Scheme != Uri.UriSchemeHttps)
         )
         {
-            return Result<Recipe, ImportFailure>.Fail(ImportFailure.InvalidUrl);
+            return Result<RecipeDraft, ImportFailure>.Fail(ImportFailure.InvalidUrl);
         }
 
         var page = await fetcher.FetchAsync(pageUrl, cancellationToken);
         if (!page.IsSuccess)
         {
-            return Result<Recipe, ImportFailure>.Fail(page.Failure);
+            return Result<RecipeDraft, ImportFailure>.Fail(page.Failure);
         }
 
-        var parsed = RecipeParser.Parse(PageDecoder.Decode(page.Value), pageUrl);
+        var parsed = RecipeParser.Parse(PageDecoder.Decode(page.Value), page.Value.Url);
         if (!parsed.IsSuccess)
         {
-            return Result<Recipe, ImportFailure>.Fail(parsed.Failure);
+            return Result<RecipeDraft, ImportFailure>.Fail(parsed.Failure);
         }
 
-        var recipe = ToEntity(parsed.Value, pageUrl);
-        recipe.Image = await images.DownloadAsync(parsed.Value.ImageUrl, cancellationToken);
-        db.Recipes.Add(recipe);
-        await db.SaveChangesAsync(cancellationToken);
-
-        return Result<Recipe, ImportFailure>.Ok(recipe);
-    }
-
-    private Recipe ToEntity(ParsedRecipe parsed, Uri pageUrl)
-    {
-        var recipe = new Recipe
-        {
-            Title = parsed.Title,
-            Servings = parsed.Servings,
-            PrepTime = parsed.PrepTime,
-            CookTime = parsed.CookTime,
-            TotalTime = parsed.TotalTime,
-            SourceUrl = pageUrl.AbsoluteUri,
-            CreatedAt = timeProvider.GetUtcNow(),
-        };
-
-        recipe.IngredientLines.AddRange(parsed.IngredientLines.Select((text, i) => new IngredientLine { Position = i, Text = text }));
-        recipe.Steps.AddRange(parsed.Steps.Select((text, i) => new Step { Position = i, Text = text }));
-        return recipe;
+        var recipe = parsed.Value;
+        var image = await images.DownloadAsync(recipe.ImageUrl, cancellationToken);
+        return Result<RecipeDraft, ImportFailure>.Ok(
+            new RecipeDraft(
+                recipe.Title,
+                recipe.Servings,
+                recipe.PrepTime,
+                recipe.CookTime,
+                recipe.TotalTime,
+                recipe.IngredientLines,
+                recipe.Steps,
+                page.Value.Url,
+                image
+            )
+        );
     }
 }

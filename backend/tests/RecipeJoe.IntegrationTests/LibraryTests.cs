@@ -1,7 +1,6 @@
 using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
-using RecipeJoe.Api;
 using RecipeJoe.Api.Recipes;
 
 namespace RecipeJoe.IntegrationTests;
@@ -20,25 +19,19 @@ public sealed class LibraryTests
     [TestCleanup]
     public async Task ResetDatabaseAsync() => await _factory.ResetDatabaseAsync();
 
-    private static async Task SeedAsync(params (string Title, string[] Lines, DateTimeOffset CreatedAt)[] recipes)
+    /// <summary>Saved oldest first, so the list shows them in reverse.</summary>
+    private static async Task SeedAsync(params (string Title, string[] Lines)[] recipes)
     {
         using var scope = _factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<RecipeJoeDbContext>();
-        foreach (var (title, lines, createdAt) in recipes)
+        var library = scope.ServiceProvider.GetRequiredService<Library>();
+        foreach (var (title, lines) in recipes)
         {
-            var recipe = new Recipe
-            {
-                Title = title,
-                SourceUrl = "http://fixtures.test/recipes/x.html",
-                CreatedAt = createdAt,
-            };
-            recipe.IngredientLines.AddRange(lines.Select((text, position) => new IngredientLine { Position = position, Text = text }));
-            db.Recipes.Add(recipe);
+            await library.SaveAsync(
+                new RecipeDraft(title, null, null, null, null, lines, [], new Uri("http://fixtures.test/recipes/x.html"), null),
+                CancellationToken.None
+            );
         }
-        await db.SaveChangesAsync();
     }
-
-    private static readonly DateTimeOffset T0 = new(2026, 1, 1, 0, 0, 0, TimeSpan.Zero);
 
     private static async Task<string[]> SearchAsync(string? q)
     {
@@ -52,9 +45,9 @@ public sealed class LibraryTests
 
     private static Task SeedSoupsAsync() =>
         SeedAsync(
-            ("Kartoffelsuppe", ["800 g Kartoffeln", "1 Zwiebel"], T0),
-            ("Linsensuppe", ["250 g Tellerlinsen", "2 Karotten"], T0.AddDays(1)),
-            ("Apfelkuchen", ["4 Äpfel", "200 g Mehl"], T0.AddDays(2))
+            ("Kartoffelsuppe", ["800 g Kartoffeln", "1 Zwiebel"]),
+            ("Linsensuppe", ["250 g Tellerlinsen", "2 Karotten"]),
+            ("Apfelkuchen", ["4 Äpfel", "200 g Mehl"])
         );
 
     [TestMethod]
@@ -127,9 +120,9 @@ public sealed class LibraryTests
     public async Task Wildcard_characters_match_literally(string q)
     {
         await SeedAsync(
-            ("Plain", ["flour"], T0),
-            ("100% Saft", ["a_b"], T0.AddDays(1)),
-            ("Back\\slash", ["x"], T0.AddDays(2))
+            ("Plain", ["flour"]),
+            ("100% Saft", ["a_b"]),
+            ("Back\\slash", ["x"])
         );
 
         var expected = q == "\\" ? "Back\\slash" : "100% Saft";

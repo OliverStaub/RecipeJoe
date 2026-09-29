@@ -201,6 +201,27 @@ public sealed class HttpPageFetcherTests
     }
 
     [TestMethod]
+    public async Task Reports_the_url_the_content_was_served_from_after_redirects()
+    {
+        Respond("/start", Response.Create().WithStatusCode(301).WithHeader("Location", "/moved/page"));
+        Respond("/moved/page", Html());
+
+        var result = await AllowLoopback().FetchAsync(Url("/start"), CancellationToken.None);
+
+        Assert.AreEqual(Url("/moved/page"), result.Value.Url);
+    }
+
+    [TestMethod]
+    public async Task Reports_the_requested_url_without_a_redirect()
+    {
+        Respond("/page", Html());
+
+        var result = await AllowLoopback().FetchAsync(Url(), CancellationToken.None);
+
+        Assert.AreEqual(Url(), result.Value.Url);
+    }
+
+    [TestMethod]
     public async Task Gives_up_after_five_redirects()
     {
         for (var i = 0; i < 7; i++)

@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Extensions.Options;
-using RecipeJoe.Api.Images;
 using RecipeJoe.Api.Recipes;
 
 namespace RecipeJoe.Api.Import;
@@ -38,13 +37,14 @@ internal static class ImportEndpoints
     private static async Task<IResult> ImportRecipeAsync(
         ImportRequest request,
         Importer importer,
+        Library library,
         CancellationToken cancellationToken
     )
     {
         var result = await importer.ImportAsync(request.Url, cancellationToken);
         if (result.IsSuccess)
         {
-            var dto = RecipeDto.From(result.Value, result.Value.Image is not null);
+            var dto = await library.SaveAsync(result.Value, cancellationToken);
             return TypedResults.Created($"/api/recipes/{dto.Id}", dto);
         }
 

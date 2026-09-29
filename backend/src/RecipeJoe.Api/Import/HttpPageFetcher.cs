@@ -94,11 +94,11 @@ internal sealed class HttpPageFetcher(HttpClient client, IOptions<ImportOptions>
                 continue;
             }
 
-            return await ReadAsync(response, expectHtml, ct);
+            return await ReadAsync(response, url, expectHtml, ct);
         }
     }
 
-    private async Task<Result<FetchedContent, ImportFailure>> ReadAsync(HttpResponseMessage response, bool expectHtml, CancellationToken ct)
+    private async Task<Result<FetchedContent, ImportFailure>> ReadAsync(HttpResponseMessage response, Uri url, bool expectHtml, CancellationToken ct)
     {
         if (IsChallenge(response))
         {
@@ -137,7 +137,7 @@ internal sealed class HttpPageFetcher(HttpClient client, IOptions<ImportOptions>
 
         return expectHtml && ContainsChallengeMarker(bytes)
             ? Fail(ImportFailure.Blocked)
-            : Result<FetchedContent, ImportFailure>.Ok(new FetchedContent(bytes, contentType?.ToString()));
+            : Result<FetchedContent, ImportFailure>.Ok(new FetchedContent(bytes, contentType?.ToString(), url));
     }
 
     /// <summary>Streams the body; null when it exceeds the cap (Content-Length can be absent or a lie).</summary>

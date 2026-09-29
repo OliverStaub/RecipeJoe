@@ -6,7 +6,7 @@ namespace RecipeJoe.Api.Images;
 /// <summary>Downloads and validates a Recipe's image. Every failure is logged and yields no image, never an Import failure.</summary>
 internal sealed partial class ImageDownloader(IPageFetcher fetcher, IOptions<ImportOptions> options, ILogger<ImageDownloader> logger)
 {
-    public async Task<RecipeImage?> DownloadAsync(Uri? url, CancellationToken cancellationToken)
+    public async Task<ImageFile?> DownloadAsync(Uri? url, CancellationToken cancellationToken)
     {
         if (url is null)
         {
@@ -33,7 +33,7 @@ internal sealed partial class ImageDownloader(IPageFetcher fetcher, IOptions<Imp
             return null;
         }
 
-        return new RecipeImage { ContentType = contentType, Bytes = bytes };
+        return new ImageFile(contentType, bytes);
     }
 
     /// <summary>The Content-Type the server claims is ignored: only the magic bytes count.</summary>

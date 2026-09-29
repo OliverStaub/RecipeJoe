@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+using RecipeJoe.Api.Recipes;
 
 namespace RecipeJoe.Api.Images;
 
@@ -12,12 +12,9 @@ internal static class ImageEndpoints
     {
         app.MapGet(
                 "/api/recipes/{id:int}/image",
-                async (int id, HttpContext context, RecipeJoeDbContext db, CancellationToken cancellationToken) =>
+                async (int id, HttpContext context, Library library, CancellationToken cancellationToken) =>
                 {
-                    var image = await db
-                        .RecipeImages.AsNoTracking()
-                        .Where(i => i.RecipeId == id)
-                        .FirstOrDefaultAsync(cancellationToken);
+                    var image = await library.GetImageAsync(id, cancellationToken);
                     if (image is null)
                     {
                         return Results.NotFound();
