@@ -1,0 +1,52 @@
+# Pre-commit autofix: format/lint staged files and re-stage the fixes. No tests, no pre-push.
+# Paths reach each `run` relative to the job's `root`.
+min_version: 2.1.0
+glob_matcher: doublestar
+
+pre-commit:
+  parallel: true
+  jobs:
+    - name: backend
+      root: backend/
+      glob: 'backend/**/*.cs'
+      # Whitespace + style + analyzers; loads the solution, so a few seconds.
+      run: dotnet format RecipeJoe.slnx --include {staged_files}
+      stage_fixed: true
+
+    - name: frontend
+      root: frontend/
+      group:
+        piped: true # ESLint then Prettier on the same files, never concurrently
+        jobs:
+          - name: eslint
+            glob: 'frontend/**/*.{ts,tsx,js,jsx,mjs,cjs}'
+            run: npx --no-install eslint --fix --no-warn-ignored {staged_files}
+            stage_fixed: true
+          - name: prettier
+            glob: 'frontend/**/*'
+            run: npx --no-install prettier --write --ignore-unknown {staged_files}
+            stage_fixed: true
+
+    - name: e2e
+      root: e2e/
+      group:
+        piped: true
+        jobs:
+          - name: eslint
+            glob: 'e2e/**/*.{ts,tsx,js,jsx,mjs,cjs}'
+            run: npx --no-install eslint --fix --no-warn-ignored {staged_files}
+            stage_fixed: true
+          - name: prettier
+            glob: 'e2e/**/*'
+            run: npx --no-install prettier --write --ignore-unknown {staged_files}
+            stage_fixed: true
+
+    # Root-level YAML/JSON, formatted with the frontend's Prettier (see `root_globs` in the justfile).
+    - name: root-config
+      glob:
+        - '*.{json,yml,yaml}'
+        - '.github/**/*.{yml,yaml}'
+        - '.claude/*.json'
+        - 'docker/**/*.{json,yml,yaml}'
+      run: frontend/node_modules/.bin/prettier --write --ignore-unknown {staged_files}
+      stage_fixed: true

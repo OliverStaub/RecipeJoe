@@ -18,7 +18,7 @@ list:
 # First-time setup on a fresh clone.
 setup:
     [ -f .env ] || cp .env.example .env
-    if [ -f lefthook.yml ]; then lefthook install; fi
+    lefthook install
     cd frontend && npm ci
     cd e2e && npm ci
     cd backend && dotnet restore {{ sln }} --locked-mode
