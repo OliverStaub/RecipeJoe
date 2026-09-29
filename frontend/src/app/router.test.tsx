@@ -1,10 +1,8 @@
-import { render, screen } from '@testing-library/react';
-import { RouterProvider, createMemoryRouter } from 'react-router-dom';
-import { routes } from './router';
+import { screen } from '@testing-library/react';
+import { renderApp } from '@/test/render';
 
 it('renders the Library heading on /', () => {
-  const router = createMemoryRouter(routes, { initialEntries: ['/'] });
-  render(<RouterProvider router={router} />);
+  renderApp('/');
 
   expect(screen.getByRole('heading', { name: 'Rezepte' })).toBeInTheDocument();
 });
