@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { DeleteRecipeDialog } from '@/features/delete-recipe/DeleteRecipeDialog';
 import { ImportDialog } from '@/features/import/ImportDialog';
 import { sourceHost } from '@/lib/sourceHost';
-import { useRecipes } from './api';
+import { useRecipes } from '@/api/recipes';
 import { useLibrarySearch } from './useLibrarySearch';
 
 export function LibraryPage() {

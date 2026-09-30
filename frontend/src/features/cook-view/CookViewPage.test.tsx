@@ -58,15 +58,18 @@ it('says so when the id is not a number', () => {
   expect(screen.getByText('Rezept nicht gefunden.')).toBeInTheDocument();
 });
 
-it('says so when loading the Recipe fails', async () => {
+it('says not found right away when the Recipe does not exist', async () => {
+  let requests = 0;
   server.use(
-    http.get('/api/recipes/{id}', ({ response }) => response(404).empty()),
+    http.get('/api/recipes/{id}', ({ response }) => {
+      requests++;
+      return response(404).empty();
+    }),
   );
   renderApp('/recipes/99');
 
-  expect(
-    await screen.findByText('Rezept konnte nicht geladen werden.'),
-  ).toBeInTheDocument();
+  expect(await screen.findByText('Rezept nicht gefunden.')).toBeInTheDocument();
+  expect(requests).toBe(1);
 });
 
 it('retries a server error once, then says loading failed', async () => {

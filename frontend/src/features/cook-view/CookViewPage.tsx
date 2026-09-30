@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeftIcon, MoreVerticalIcon, UsersIcon } from 'lucide-react';
+import { useRecipe } from '@/api/recipes';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -12,7 +13,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { DeleteRecipeDialog } from '@/features/delete-recipe/DeleteRecipeDialog';
 import { sourceHost } from '@/lib/sourceHost';
-import { useRecipe } from './api';
 import { formatDuration } from './formatDuration';
 import { useWakeLock, type WakeLockStatus } from './useWakeLock';
 
@@ -24,8 +24,8 @@ const wakeLockLabel: Record<WakeLockStatus, string> = {
 
 export function CookViewPage() {
   const id = Number(useParams().id);
-  const { data: recipe, isPending, isError } = useRecipe(id);
-  const invalid = !Number.isInteger(id);
+  const state = useRecipe(id);
+  const recipe = state.status === 'loaded' ? state.recipe : undefined;
   const wakeLock = useWakeLock();
   const navigate = useNavigate();
   const [confirmingDelete, setConfirmingDelete] = useState(false);
@@ -81,11 +81,11 @@ export function CookViewPage() {
         </div>
       </header>
       <main className="mx-auto max-w-2xl p-4">
-        {invalid ? (
+        {state.status === 'notFound' ? (
           <p>Rezept nicht gefunden.</p>
-        ) : isError || (!isPending && !recipe) ? (
+        ) : state.status === 'error' ? (
           <p>Rezept konnte nicht geladen werden.</p>
-        ) : isPending || !recipe ? null : (
+        ) : state.status === 'loading' || !recipe ? null : (
           <article className="grid gap-6">
             {recipe.imageUrl && (
               <AspectRatio ratio={4 / 3} className="overflow-hidden rounded-lg">
