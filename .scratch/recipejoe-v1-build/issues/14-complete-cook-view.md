@@ -6,7 +6,7 @@
 
 **Blocked by:** 10 (Import from the UI → basic Cook View)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [ ] Sticky top bar: back, truncated title, ⋮ `DropdownMenu` with "Quelle öffnen"
 - [ ] `Badge`s, each shown only if present:

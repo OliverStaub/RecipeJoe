@@ -6,7 +6,7 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** done
+**Status:** resolved
 
 - [x] Repo baseline: `.gitignore`, `.editorconfig`, `.prettierrc`, `.nvmrc`, `global.json` (.NET 10 SDK), `.env.example` with the §2.8 variables
 - [x] `RecipeJoe.slnx`, `Directory.Build.props` (TreatWarningsAsErrors, nullable, analyzers, coverage exclusions), `Directory.Packages.props`, lock files with `RestorePackagesWithLockFile`

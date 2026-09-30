@@ -6,7 +6,7 @@
 
 **Blocked by:** 05 (justfile)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [ ] Claude PostToolUse hook in `.claude/settings.json`, keeping the existing git guardrail
   - reads `tool_input.file_path` and finds the repo root from it

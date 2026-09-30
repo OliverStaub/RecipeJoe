@@ -6,7 +6,7 @@
 
 **Blocked by:** 13 (Recipe images)
 
-**Status:** done
+**Status:** resolved
 
 - [x] `GET /api/recipes?q=` → `RecipeSummary[]` `{ id, title, sourceUrl, hasImage }`, ordered by `CreatedAt` desc; an empty or missing `q` returns the whole Library
 - [x] Search: whitespace tokens ANDed; each token `ILIKE` on the title OR any Ingredient Line (`EXISTS`); `%`, `_`, `\` escaped

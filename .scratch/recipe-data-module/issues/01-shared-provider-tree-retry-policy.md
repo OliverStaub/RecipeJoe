@@ -6,7 +6,7 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** done
+**Status:** resolved
 
 - [x] One query-client configuration factory: queries never retry a 4xx, retry any other failure once; mutations not retried
 - [x] One app-providers module renders query-client provider, router and toaster; app uses the browser router, `renderApp` a memory router with a fresh client per test

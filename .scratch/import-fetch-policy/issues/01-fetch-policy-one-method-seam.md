@@ -6,7 +6,7 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** done
+**Status:** resolved
 
 - [x] Fetch seam has a single method; fetch kind only changes the Accept header in the HTTP adapter
 - [x] Fetch policy applies all spec rules unchanged (challenge header, 401/402/403/429, 404/410, 503 challenge page, other non-2xx, size cap, page Content-Type, 2xx challenge page); classification helpers private to it

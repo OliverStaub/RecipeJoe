@@ -6,7 +6,7 @@
 
 **Blocked by:** 01 (Backend skeleton + repo baseline)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [ ] Vite + React + TS strict, ESLint (`--max-warnings=0`), Prettier from root config
 - [ ] Tailwind + shadcn init (`base-nova`, default theme) with the §2.7 component list

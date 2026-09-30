@@ -6,7 +6,7 @@
 
 **Blocked by:** 14 (Complete Cook View), 15 (Library list + search)
 
-**Status:** done
+**Status:** resolved
 
 - [x] `DELETE /api/recipes/{id}`: `204`; `404`; Lines, Steps and image are deleted with the Recipe
 - [x] `useDeleteRecipe()`: invalidates the Library and removes the cached Recipe

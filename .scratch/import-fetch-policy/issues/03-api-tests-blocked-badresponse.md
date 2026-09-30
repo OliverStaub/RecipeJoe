@@ -6,7 +6,7 @@
 
 **Blocked by:** 02 (Canned fixture responses + per-rule Importer tests)
 
-**Status:** done
+**Status:** resolved
 
 - [x] Test API factory lets a test register canned responses on the fixture adapter
 - [x] API test: Blocked Import returns the expected status code and problem `kind`

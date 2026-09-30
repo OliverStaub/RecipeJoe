@@ -6,7 +6,7 @@
 
 **Blocked by:** 11 (Parser covers all schema.org variants), 12 (HttpClient fetcher + SSRF guard), 13 (Recipe images)
 
-**Status:** done
+**Status:** resolved
 
 - [x] `just seed` (bash + curl + jq); dev only, never run automatically
 - [x] `GET /api/recipes`; if the Library is not empty, exit with a message

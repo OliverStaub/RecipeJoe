@@ -6,7 +6,7 @@
 
 **Blocked by:** 01 (Fetch policy owns response classification)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [ ] Fixture adapter serves registered per-URL canned responses; unregistered unknown URLs still 404
 - [ ] Importer tests, one per rule: Blocked via 403, 429, challenge header, 503 challenge page, 200 challenge page; NotFound via 410; BadResponse via 500, non-HTML page, over-cap body

@@ -6,7 +6,7 @@
 
 **Blocked by:** 01 (Backend skeleton), 02 (Frontend skeleton)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [ ] `postgres` service with a `pg_isready` healthcheck on `127.0.0.1:5432`, credentials from `.env`
 - [ ] `fixtures` nginx service serving the fixtures dir read-only on `127.0.0.1:8081`, with `sub_filter '__TOKEN__' $arg_t` for `e2e/` pages (one placeholder page to prove it)

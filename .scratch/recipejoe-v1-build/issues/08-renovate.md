@@ -6,7 +6,7 @@
 
 **Blocked by:** 07 (CI workflow + coverage gate)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [x] `renovate.json`: `helpers:pinGitHubActionDigests`, weekly schedule, groups (`@types/*`, MSTest, …), `minimumReleaseAge: 3 days`
 - [x] Automerge minor/patch/digest when green; majors as PRs; runner label bumps included

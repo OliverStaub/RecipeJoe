@@ -6,7 +6,7 @@
 
 **Blocked by:** 04 (E2E package + smoke test)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [x] `set positional-arguments`, `set dotenv-load`, `*args` + `"$@"` pass-through
 - [x] All recipes from §4.1: `setup`, `dev-db`/`dev-api`/`dev-web`, `seed` (stub), `up`/`down`/`reset`, `build`, `fmt`/`fmt-check`, `lint`, `test`, `test-unit`, `test-int`, `test-contract`, `test-e2e`, `cov`/`cov-backend`/`cov-frontend`, `mutate`

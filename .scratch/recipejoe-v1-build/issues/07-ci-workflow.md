@@ -6,7 +6,7 @@
 
 **Blocked by:** 05 (justfile)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [ ] Triggers: push to `main`, `pull_request`, `workflow_dispatch`; `concurrency` with `cancel-in-progress` on PRs; no `paths:` filters
 - [ ] Jobs:

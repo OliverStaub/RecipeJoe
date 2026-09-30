@@ -6,7 +6,7 @@
 
 **Blocked by:** 03 (Compose + container images)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [ ] `/e2e` package with its own `package.json`, ESLint + Prettier, `playwright.config.ts`
 - [ ] Projects: Chromium, WebKit/iPhone, Pixel; `baseURL` `http://localhost:8080`; `retries: 1`, `trace: 'retain-on-failure'`

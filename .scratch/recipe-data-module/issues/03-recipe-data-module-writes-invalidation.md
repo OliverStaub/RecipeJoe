@@ -6,7 +6,7 @@
 
 **Blocked by:** 02 (Recipe data module: reads + "not found" state)
 
-**Status:** done
+**Status:** resolved
 
 - [x] `useImportRecipe()` invalidates the Library list on success
 - [x] `useDeleteRecipe()` removes that Recipe's cached entry and invalidates the Library list; other Recipes' entries untouched

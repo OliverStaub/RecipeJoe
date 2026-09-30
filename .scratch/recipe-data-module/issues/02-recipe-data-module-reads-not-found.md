@@ -6,7 +6,7 @@
 
 **Blocked by:** 01 (Shared provider tree + retry policy)
 
-**Status:** done
+**Status:** resolved
 
 - [x] `useRecipes(q)` keeps previous results while a new search loads (behaviour preserved)
 - [x] `useRecipe(id)`: non-integer id → not found, no request; 404 → not found
