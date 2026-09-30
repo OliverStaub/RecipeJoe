@@ -25,7 +25,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
         });
 
         builder.ConfigureTestServices(services =>
-            services.Replace(ServiceDescriptor.Singleton<IFetcher, FixturePageFetcher>())
+            services.Replace(ServiceDescriptor.Singleton<IFetcher, FixtureFetcher>())
         );
     }
 

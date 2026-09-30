@@ -28,32 +28,26 @@ public sealed class ImageDownloaderTests
     private static readonly byte[] Gif89 = Padded("GIF89a"u8.ToArray());
     private static readonly byte[] Webp = Padded([.. "RIFF"u8, 0, 0, 0, 0, .. "WEBP"u8]);
 
-    private sealed class ImageStub(RawResponse response) : IFetcher
+    private const string ImageUrl = "http://cdn.test/a.jpg";
+
+    private static FixtureFetcher Serving(byte[] bytes, string? contentType = "image/jpeg")
     {
-        public Uri? Requested { get; private set; }
-
-        public Task<Result<RawResponse, ImportFailure>> FetchAsync(Uri url, FetchKind kind, CancellationToken cancellationToken)
-        {
-            Assert.AreEqual(FetchKind.Image, kind);
-            Requested = url;
-            return Task.FromResult(Result<RawResponse, ImportFailure>.Ok(response));
-        }
+        var fetcher = new FixtureFetcher();
+        fetcher.Serve(ImageUrl, 200, contentType, bytes);
+        return fetcher;
     }
-
-    private static ImageStub Serving(byte[] bytes, string? contentType = "image/jpeg") =>
-        new(new RawResponse(200, contentType, null, bytes, new Uri("http://cdn.test/x")));
 
     [TestMethod]
     public async Task Downloads_the_image_from_the_url_and_stores_it_as_is()
     {
         var fetcher = Serving(Jpeg);
 
-        var image = await Create(fetcher).DownloadAsync(new Uri("http://cdn.test/a.jpg"), CancellationToken.None);
+        var image = await Create(fetcher).DownloadAsync(new Uri(ImageUrl), CancellationToken.None);
 
         Assert.IsNotNull(image);
         Assert.AreEqual("image/jpeg", image.ContentType);
         CollectionAssert.AreEqual(Jpeg, image.Bytes);
-        Assert.AreEqual(new Uri("http://cdn.test/a.jpg"), fetcher.Requested);
+        CollectionAssert.AreEqual(new[] { (new Uri(ImageUrl), FetchKind.Image) }, fetcher.Requests.ToArray());
     }
 
     [TestMethod]
@@ -69,7 +63,7 @@ public sealed class ImageDownloaderTests
 
         foreach (var (path, contentType) in expected)
         {
-            var image = await Create(new FixturePageFetcher())
+            var image = await Create(new FixtureFetcher())
                 .DownloadAsync(new Uri($"http://fixtures.test/images/{path}"), CancellationToken.None);
 
             Assert.AreEqual(contentType, image?.ContentType, path);
@@ -81,7 +75,7 @@ public sealed class ImageDownloaderTests
     public async Task Detects_the_type_by_magic_bytes_whatever_the_server_claims(byte[] bytes, string expectedType)
     {
         var image = await Create(Serving(bytes, "application/octet-stream"))
-            .DownloadAsync(new Uri("http://cdn.test/x"), CancellationToken.None);
+            .DownloadAsync(new Uri(ImageUrl), CancellationToken.None);
 
         Assert.AreEqual(expectedType, image?.ContentType);
     }
@@ -95,13 +89,13 @@ public sealed class ImageDownloaderTests
         var fetcher = Serving(Jpeg);
 
         Assert.IsNull(await Create(fetcher).DownloadAsync(null, CancellationToken.None));
-        Assert.IsNull(fetcher.Requested);
+        Assert.IsEmpty(fetcher.Requests);
     }
 
     [TestMethod]
     public async Task Has_no_image_when_the_download_fails()
     {
-        var image = await Create(new FixturePageFetcher())
+        var image = await Create(new FixtureFetcher())
             .DownloadAsync(new Uri("http://fixtures.test/images/gibt-es-nicht.jpg"), CancellationToken.None);
 
         Assert.IsNull(image);
@@ -115,7 +109,7 @@ public sealed class ImageDownloaderTests
     public async Task Has_no_image_when_the_magic_bytes_are_wrong_even_if_the_server_says_image(string body)
     {
         var image = await Create(Serving(System.Text.Encoding.ASCII.GetBytes(body), "image/jpeg"))
-            .DownloadAsync(new Uri("http://cdn.test/a.jpg"), CancellationToken.None);
+            .DownloadAsync(new Uri(ImageUrl), CancellationToken.None);
 
         Assert.IsNull(image);
     }

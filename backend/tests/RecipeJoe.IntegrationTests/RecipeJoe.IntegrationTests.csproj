@@ -14,7 +14,7 @@
 
   <ItemGroup>
     <None Include="../../../fixtures/**" Link="fixtures/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
-    <Compile Include="../RecipeJoe.UnitTests/Import/FixturePageFetcher.cs" Link="FixturePageFetcher.cs" />
+    <Compile Include="../RecipeJoe.UnitTests/Import/FixtureFetcher.cs" Link="FixtureFetcher.cs" />
   </ItemGroup>
 
   <ItemGroup>
