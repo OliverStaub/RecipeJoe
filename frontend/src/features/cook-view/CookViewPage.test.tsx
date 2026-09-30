@@ -1,3 +1,4 @@
+import { HttpResponse } from 'msw';
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, server } from '@/test/server';
@@ -66,6 +67,39 @@ it('says so when loading the Recipe fails', async () => {
   expect(
     await screen.findByText('Rezept konnte nicht geladen werden.'),
   ).toBeInTheDocument();
+});
+
+it('retries a server error once, then says loading failed', async () => {
+  let requests = 0;
+  server.use(
+    http.get('/api/recipes/{id}', ({ response }) => {
+      requests++;
+      return response.untyped(new HttpResponse(null, { status: 500 }));
+    }),
+  );
+  renderApp('/recipes/7');
+
+  expect(
+    await screen.findByText('Rezept konnte nicht geladen werden.'),
+  ).toBeInTheDocument();
+  expect(requests).toBe(2);
+});
+
+it('shows the Recipe when a server error succeeds on retry', async () => {
+  let requests = 0;
+  server.use(
+    http.get('/api/recipes/{id}', ({ response }) =>
+      ++requests === 1
+        ? response.untyped(new HttpResponse(null, { status: 500 }))
+        : response(200).json(recipe),
+    ),
+  );
+  renderApp('/recipes/7');
+
+  expect(
+    await screen.findByRole('heading', { name: 'Kartoffelsuppe' }),
+  ).toBeInTheDocument();
+  expect(requests).toBe(2);
 });
 
 it('shows Servings and formatted times, each only when present', async () => {

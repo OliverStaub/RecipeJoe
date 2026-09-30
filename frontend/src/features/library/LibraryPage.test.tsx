@@ -124,3 +124,19 @@ it('says so when loading the Library fails', async () => {
     screen.queryByText('Importiere dein erstes Rezept'),
   ).not.toBeInTheDocument();
 });
+
+it('does not retry a client error', async () => {
+  let requests = 0;
+  server.use(
+    http.get('/api/recipes', ({ response }) => {
+      requests++;
+      return response.untyped(HttpResponse.json({}, { status: 400 }));
+    }),
+  );
+  renderApp();
+
+  expect(
+    await screen.findByText('Rezepte konnten nicht geladen werden.'),
+  ).toBeInTheDocument();
+  expect(requests).toBe(1);
+});

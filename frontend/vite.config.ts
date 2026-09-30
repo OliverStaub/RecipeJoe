@@ -22,8 +22,6 @@ export default defineConfig({
         'src/components/ui/**',
         'src/test/**',
         'src/main.tsx',
-        // Wiring only; exercised through feature tests once endpoints exist (ticket 09+).
-        'src/api/client.ts',
         '**/*.test.{ts,tsx}',
       ],
       thresholds: process.env.CI ? { lines: 80 } : undefined,
