@@ -5,7 +5,7 @@ using Microsoft.Extensions.Options;
 namespace RecipeJoe.Api.Import;
 
 /// <summary>Production <see cref="IFetcher"/>: transport only, the <see cref="FetchPolicy"/> judges responses. SSRF protection lives in the handler's connect callback, see <see cref="ConnectGuarded"/>.</summary>
-internal sealed class HttpPageFetcher(HttpClient client, IOptions<ImportOptions> options) : IFetcher
+internal sealed class HttpFetcher(HttpClient client, IOptions<ImportOptions> options) : IFetcher
 {
     internal const string UserAgent =
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";

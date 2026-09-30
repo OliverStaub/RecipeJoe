@@ -11,7 +11,7 @@ namespace RecipeJoe.IntegrationTests;
 
 /// <summary>The real HttpClient adapter plus the fetch policy, wired through AddImport(), against WireMock on loopback.</summary>
 [TestClass]
-public sealed class HttpPageFetcherTests
+public sealed class HttpFetcherTests
 {
     private WireMockServer _server = null!;
 
