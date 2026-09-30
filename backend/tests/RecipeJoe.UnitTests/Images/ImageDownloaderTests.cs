@@ -12,7 +12,7 @@ public sealed class ImageDownloaderTests
 {
     private static readonly Uri PageUrl = new("http://fixtures.test/recipes/apfelkuchen.html");
 
-    private static ImageDownloader Create(IPageFetcher fetcher) =>
+    private static ImageDownloader Create(IFetcher fetcher) =>
         new(new FetchPolicy(fetcher, Options.Create(new ImportOptions())), NullLogger<ImageDownloader>.Instance);
 
     private static byte[] Padded(byte[] header, int length = 64)
@@ -28,7 +28,7 @@ public sealed class ImageDownloaderTests
     private static readonly byte[] Gif89 = Padded("GIF89a"u8.ToArray());
     private static readonly byte[] Webp = Padded([.. "RIFF"u8, 0, 0, 0, 0, .. "WEBP"u8]);
 
-    private sealed class ImageStub(RawResponse response) : IPageFetcher
+    private sealed class ImageStub(RawResponse response) : IFetcher
     {
         public Uri? Requested { get; private set; }
 

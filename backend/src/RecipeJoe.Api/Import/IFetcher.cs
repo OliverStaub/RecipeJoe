@@ -13,7 +13,7 @@ internal enum FetchKind
 internal sealed record RawResponse(int StatusCode, string? ContentType, string? ChallengeMitigation, byte[]? Body, Uri Url);
 
 /// <summary>The only seam: all outbound HTTP (pages and images), only moving bytes. Adapters: HttpClient (prod), fixtures (tests). Only <see cref="FetchPolicy"/> calls it.</summary>
-internal interface IPageFetcher
+internal interface IFetcher
 {
     /// <summary>A response of any status, or a transport failure: Unreachable, ForbiddenAddress or BadResponse (broken redirects).</summary>
     Task<Result<RawResponse, ImportFailure>> FetchAsync(Uri url, FetchKind kind, CancellationToken cancellationToken);

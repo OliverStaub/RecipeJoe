@@ -8,7 +8,7 @@ namespace RecipeJoe.Api.Import;
 internal sealed record FetchedContent(byte[] Bytes, string? ContentType, Uri Url);
 
 /// <summary>Every Import fetch goes through here: turns an adapter's raw response into content or an Import failure, the same way for every adapter.</summary>
-internal sealed class FetchPolicy(IPageFetcher fetcher, IOptions<ImportOptions> options)
+internal sealed class FetchPolicy(IFetcher fetcher, IOptions<ImportOptions> options)
 {
     private static readonly string[] HtmlMediaTypes = ["text/html", "application/xhtml+xml"];
 

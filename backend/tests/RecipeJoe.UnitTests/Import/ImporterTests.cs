@@ -15,13 +15,13 @@ public sealed class ImporterTests
         Path.Combine(AppContext.BaseDirectory, "fixtures", "recipes", "apfelkuchen.html")
     ).Length;
 
-    private static Importer CreateImporter(IPageFetcher fetcher, int maxBytes = 5 * 1024 * 1024)
+    private static Importer CreateImporter(IFetcher fetcher, int maxBytes = 5 * 1024 * 1024)
     {
         var policy = new FetchPolicy(fetcher, Options.Create(new ImportOptions { MaxBytes = maxBytes }));
         return new(policy, new ImageDownloader(policy, NullLogger<ImageDownloader>.Instance));
     }
 
-    private sealed class StubFetcher(Result<RawResponse, ImportFailure>? result) : IPageFetcher
+    private sealed class StubFetcher(Result<RawResponse, ImportFailure>? result) : IFetcher
     {
         public int Calls { get; private set; }
 

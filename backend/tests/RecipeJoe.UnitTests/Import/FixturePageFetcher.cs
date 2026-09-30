@@ -4,7 +4,7 @@ using RecipeJoe.Api.Import;
 namespace RecipeJoe.UnitTests.Import;
 
 /// <summary>Raw responses only, so the <see cref="FetchPolicy"/> judges them as in production. Serves fixtures/ at http://fixtures.test/; any other host 404s. <c>http://short.test/{name}</c> redirects to <c>fixtures.test/recipes/{name}.html</c>, like a link shortener.</summary>
-internal sealed class FixturePageFetcher : IPageFetcher
+internal sealed class FixturePageFetcher : IFetcher
 {
     private const string FixturesHost = "fixtures.test";
     private const string ShortenerHost = "short.test";
