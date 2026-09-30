@@ -6,13 +6,13 @@
 
 **Blocked by:** 02 (Recipe data module: reads + "not found" state)
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] `useImportRecipe()` invalidates the Library list on success
-- [ ] `useDeleteRecipe()` removes that Recipe's cached entry and invalidates the Library list; other Recipes' entries untouched
-- [ ] Import feature's error-kind parsing moves into its failure-message code (no merge of the two; out of scope)
-- [ ] Import and delete per-feature data files deleted; no feature references cache keys
-- [ ] Route test: Import → back in the Library, the new Recipe is listed
-- [ ] Route test: delete from Cook View → back in the Library, the Recipe is no longer listed (extends delete-flow test)
-- [ ] Hook-level delete test that hand-builds cache keys deleted
-- [ ] Coverage gate passes
+- [x] `useImportRecipe()` invalidates the Library list on success
+- [x] `useDeleteRecipe()` removes that Recipe's cached entry and invalidates the Library list; other Recipes' entries untouched
+- [x] Import feature's error-kind parsing moves into its failure-message code (no merge of the two; out of scope)
+- [x] Import and delete per-feature data files deleted; no feature references cache keys
+- [x] Route test: Import → back in the Library, the new Recipe is listed
+- [x] Route test: delete from Cook View → back in the Library, the Recipe is no longer listed (extends delete-flow test)
+- [x] Hook-level delete test that hand-builds cache keys deleted
+- [x] Coverage gate passes

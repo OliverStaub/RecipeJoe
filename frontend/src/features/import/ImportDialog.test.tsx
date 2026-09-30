@@ -2,6 +2,7 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { delay } from 'msw';
 import { HttpResponse } from 'msw';
+import type { components } from '@/api/schema';
 import { http, server } from '@/test/server';
 import { recipe, renderApp } from '@/test/render';
 
@@ -191,4 +192,34 @@ it('refreshes the Library before opening the Cook View', async () => {
 
   await screen.findByRole('heading', { name: 'Kartoffelsuppe' });
   expect(libraryLoads).toBe(2);
+});
+
+it('lists the imported Recipe back in the Library', async () => {
+  let library: components['schemas']['RecipeSummaryDto'][] = [];
+  server.use(
+    http.get('/api/recipes', ({ response }) => response(200).json(library)),
+    http.post('/api/recipes/import', ({ response }) => {
+      library = [
+        {
+          id: 7,
+          title: 'Kartoffelsuppe',
+          sourceUrl: 'http://x.test/a',
+          hasImage: false,
+        },
+      ];
+      return response(201).json(recipe);
+    }),
+    http.get('/api/recipes/{id}', ({ response }) => response(200).json(recipe)),
+  );
+  const user = await openDialog();
+  await screen.findByText('Importiere dein erstes Rezept');
+  await user.type(urlInput(), 'http://x.test/a');
+  await user.click(dialogSubmit());
+  await screen.findByRole('heading', { name: 'Kartoffelsuppe' });
+
+  await user.click(screen.getByRole('link', { name: /Rezepte/ }));
+
+  expect(
+    await screen.findByRole('link', { name: /Kartoffelsuppe/ }),
+  ).toBeInTheDocument();
 });

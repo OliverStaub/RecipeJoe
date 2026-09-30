@@ -1,4 +1,5 @@
 import { toast } from 'sonner';
+import { useDeleteRecipe } from '@/api/recipes';
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -9,7 +10,6 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import { useDeleteRecipe } from './api';
 
 type Props = {
   /** The Recipe to confirm deleting; `null` keeps the dialog closed. */

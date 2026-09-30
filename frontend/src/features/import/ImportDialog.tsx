@@ -12,8 +12,8 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { toImportFailure, useImportRecipe } from './api';
-import { failureMessage } from './failureMessage';
+import { useImportRecipe } from '@/api/recipes';
+import { failureMessage, toImportFailure } from './failureMessage';
 
 export function ImportDialog() {
   const [open, setOpen] = useState(false);

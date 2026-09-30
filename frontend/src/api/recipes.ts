@@ -1,4 +1,8 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import {
+  keepPreviousData,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { $api, HttpError } from './client';
 import type { components } from './schema';
 
@@ -14,6 +18,9 @@ const libraryQuery = (q: string) =>
   $api.queryOptions('get', '/api/recipes', {
     params: { query: q ? { q } : {} },
   });
+
+// No `init`, so the key is a prefix of every search's key.
+const allLibraryQueries = $api.queryOptions('get', '/api/recipes').queryKey;
 
 const recipeByIdQuery = (id: number) =>
   $api.queryOptions('get', '/api/recipes/{id}', { params: { path: { id } } });
@@ -38,4 +45,27 @@ export function useRecipe(id: number): RecipeState {
       : { status: 'error' };
   }
   return { status: 'loaded', recipe: query.data };
+}
+
+/** Imports a Recipe from a URL; waits for the Library to refetch, so it lists the Recipe before the Cook View opens. */
+export function useImportRecipe() {
+  const queryClient = useQueryClient();
+  return $api.useMutation('post', '/api/recipes/import', {
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: allLibraryQueries }),
+  });
+}
+
+/** Deletes a Recipe; drops its cached entry (other Recipes' stay) and refetches the Library without waiting. */
+export function useDeleteRecipe() {
+  const queryClient = useQueryClient();
+  return $api.useMutation('delete', '/api/recipes/{id}', {
+    onSuccess: (_data, { params }) => {
+      queryClient.removeQueries({
+        queryKey: recipeByIdQuery(params.path.id).queryKey,
+        exact: true,
+      });
+      void queryClient.invalidateQueries({ queryKey: allLibraryQueries });
+    },
+  });
 }
