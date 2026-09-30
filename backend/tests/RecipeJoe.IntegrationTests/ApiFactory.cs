@@ -15,6 +15,9 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
 {
     private Respawner? _respawner;
 
+    /// <summary>The app's fetch adapter; <c>Serve</c> canned responses on it to shape what an Import sees. Shared by every test using this factory, so use a unique URL per test.</summary>
+    internal FixtureFetcher Fetcher { get; } = new();
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.ConfigureAppConfiguration((_, config) =>
@@ -25,7 +28,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
         });
 
         builder.ConfigureTestServices(services =>
-            services.Replace(ServiceDescriptor.Singleton<IFetcher, FixtureFetcher>())
+            services.Replace(ServiceDescriptor.Singleton<IFetcher>(Fetcher))
         );
     }
 

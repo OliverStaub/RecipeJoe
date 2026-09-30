@@ -74,6 +74,35 @@ public sealed class ImportRecipeTests
 
         var response = await ImportAsync(client, url);
 
+        await AssertFailedImportAsync(client, response, expectedStatus, expectedKind);
+    }
+
+    [TestMethod]
+    [DataRow(403, "text/html", "Blocked")]
+    [DataRow(500, "text/html", "BadResponse")]
+    [DataRow(200, "application/pdf", "BadResponse")]
+    public async Task A_site_response_the_fetch_policy_rejects_returns_the_kind_as_problem_details_and_saves_nothing(
+        int fetchStatus,
+        string contentType,
+        string expectedKind
+    )
+    {
+        var url = $"http://canned.test/{fetchStatus}/{contentType}";
+        _factory.Fetcher.Serve(url, fetchStatus, contentType);
+        var client = _factory.CreateClient();
+
+        var response = await ImportAsync(client, url);
+
+        await AssertFailedImportAsync(client, response, HttpStatusCode.UnprocessableEntity, expectedKind);
+    }
+
+    private static async Task AssertFailedImportAsync(
+        HttpClient client,
+        HttpResponseMessage response,
+        HttpStatusCode expectedStatus,
+        string expectedKind
+    )
+    {
         Assert.AreEqual(expectedStatus, response.StatusCode);
         Assert.AreEqual("application/problem+json", response.Content.Headers.ContentType?.MediaType);
         var problem = await response.Content.ReadFromJsonAsync<JsonElement>();

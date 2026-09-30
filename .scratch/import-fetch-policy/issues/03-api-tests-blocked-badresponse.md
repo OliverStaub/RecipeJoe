@@ -6,8 +6,8 @@
 
 **Blocked by:** 02 (Canned fixture responses + per-rule Importer tests)
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Test API factory lets a test register canned responses on the fixture adapter
-- [ ] API test: Blocked Import returns the expected status code and problem `kind`
-- [ ] API test: BadResponse Import returns the expected status code and problem `kind`
+- [x] Test API factory lets a test register canned responses on the fixture adapter
+- [x] API test: Blocked Import returns the expected status code and problem `kind`
+- [x] API test: BadResponse Import returns the expected status code and problem `kind`
