@@ -9,21 +9,27 @@ namespace RecipeJoe.UnitTests.Import;
 [TestClass]
 public sealed class ImporterTests
 {
-    private static Importer CreateImporter(IPageFetcher fetcher) =>
-        new(fetcher, new ImageDownloader(fetcher, Options.Create(new ImportOptions()), NullLogger<ImageDownloader>.Instance));
+    private const string Apfelkuchen = "http://fixtures.test/recipes/apfelkuchen.html";
 
-    private sealed class StubFetcher(Result<FetchedContent, ImportFailure>? result) : IPageFetcher
+    private static readonly int ApfelkuchenBytes = File.ReadAllBytes(
+        Path.Combine(AppContext.BaseDirectory, "fixtures", "recipes", "apfelkuchen.html")
+    ).Length;
+
+    private static Importer CreateImporter(IPageFetcher fetcher, int maxBytes = 5 * 1024 * 1024)
+    {
+        var policy = new FetchPolicy(fetcher, Options.Create(new ImportOptions { MaxBytes = maxBytes }));
+        return new(policy, new ImageDownloader(policy, NullLogger<ImageDownloader>.Instance));
+    }
+
+    private sealed class StubFetcher(Result<RawResponse, ImportFailure>? result) : IPageFetcher
     {
         public int Calls { get; private set; }
 
-        public Task<Result<FetchedContent, ImportFailure>> FetchAsync(Uri url, CancellationToken cancellationToken)
+        public Task<Result<RawResponse, ImportFailure>> FetchAsync(Uri url, FetchKind kind, CancellationToken cancellationToken)
         {
             Calls++;
             return Task.FromResult(result ?? throw new InvalidOperationException("Unexpected fetch."));
         }
-
-        public Task<Result<FetchedContent, ImportFailure>> FetchImageAsync(Uri url, CancellationToken cancellationToken) =>
-            throw new InvalidOperationException("Unexpected image fetch.");
     }
 
     [TestMethod]
@@ -53,7 +59,7 @@ public sealed class ImporterTests
     public async Task Fails_with_NoRecipe_for_a_page_without_a_recipe()
     {
         var fetcher = new StubFetcher(
-            Result<FetchedContent, ImportFailure>.Ok(new FetchedContent("<html></html>"u8.ToArray(), "text/html", new Uri("http://fixtures.test/x")))
+            Result<RawResponse, ImportFailure>.Ok(new RawResponse(200, "text/html", null, "<html></html>"u8.ToArray(), new Uri("http://fixtures.test/x")))
         );
 
         var result = await CreateImporter(fetcher).ImportAsync("http://fixtures.test/x", CancellationToken.None);
@@ -70,5 +76,23 @@ public sealed class ImporterTests
         Assert.AreEqual("Einfacher Apfelkuchen", draft.Title);
         Assert.AreEqual(new Uri("http://fixtures.test/recipes/apfelkuchen.html"), draft.Source);
         Assert.AreEqual("image/jpeg", draft.Image?.ContentType);
+    }
+
+    [TestMethod]
+    public async Task Fails_with_BadResponse_for_a_page_over_the_cap_even_if_the_adapter_hands_over_the_whole_body()
+    {
+        var result = await CreateImporter(new FixturePageFetcher(), maxBytes: ApfelkuchenBytes - 1)
+            .ImportAsync(Apfelkuchen, CancellationToken.None);
+
+        Assert.AreEqual(ImportFailure.BadResponse, result.Failure);
+    }
+
+    [TestMethod]
+    public async Task Imports_a_page_exactly_at_the_cap()
+    {
+        var result = await CreateImporter(new FixturePageFetcher(), maxBytes: ApfelkuchenBytes)
+            .ImportAsync(Apfelkuchen, CancellationToken.None);
+
+        Assert.IsTrue(result.IsSuccess);
     }
 }

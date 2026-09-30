@@ -19,6 +19,7 @@ internal static class ImportEndpoints
             .ConfigurePrimaryHttpMessageHandler(sp =>
                 HttpPageFetcher.CreateHandler(sp.GetRequiredService<IOptions<ImportOptions>>().Value)
             );
+        services.AddScoped<FetchPolicy>();
         services.AddScoped<Importer>();
         return services;
     }

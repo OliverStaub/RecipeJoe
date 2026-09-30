@@ -12,8 +12,8 @@ public sealed class ImageDownloaderTests
 {
     private static readonly Uri PageUrl = new("http://fixtures.test/recipes/apfelkuchen.html");
 
-    private static ImageDownloader Create(IPageFetcher fetcher, int maxBytes = 5 * 1024 * 1024) =>
-        new(fetcher, Options.Create(new ImportOptions { MaxBytes = maxBytes }), NullLogger<ImageDownloader>.Instance);
+    private static ImageDownloader Create(IPageFetcher fetcher) =>
+        new(new FetchPolicy(fetcher, Options.Create(new ImportOptions())), NullLogger<ImageDownloader>.Instance);
 
     private static byte[] Padded(byte[] header, int length = 64)
     {
@@ -28,22 +28,20 @@ public sealed class ImageDownloaderTests
     private static readonly byte[] Gif89 = Padded("GIF89a"u8.ToArray());
     private static readonly byte[] Webp = Padded([.. "RIFF"u8, 0, 0, 0, 0, .. "WEBP"u8]);
 
-    private sealed class ImageStub(Result<FetchedContent, ImportFailure> result) : IPageFetcher
+    private sealed class ImageStub(RawResponse response) : IPageFetcher
     {
         public Uri? Requested { get; private set; }
 
-        public Task<Result<FetchedContent, ImportFailure>> FetchAsync(Uri url, CancellationToken cancellationToken) =>
-            throw new InvalidOperationException("Images are fetched with FetchImageAsync.");
-
-        public Task<Result<FetchedContent, ImportFailure>> FetchImageAsync(Uri url, CancellationToken cancellationToken)
+        public Task<Result<RawResponse, ImportFailure>> FetchAsync(Uri url, FetchKind kind, CancellationToken cancellationToken)
         {
+            Assert.AreEqual(FetchKind.Image, kind);
             Requested = url;
-            return Task.FromResult(result);
+            return Task.FromResult(Result<RawResponse, ImportFailure>.Ok(response));
         }
     }
 
     private static ImageStub Serving(byte[] bytes, string? contentType = "image/jpeg") =>
-        new(Result<FetchedContent, ImportFailure>.Ok(new FetchedContent(bytes, contentType, new Uri("http://cdn.test/x"))));
+        new(new RawResponse(200, contentType, null, bytes, new Uri("http://cdn.test/x")));
 
     [TestMethod]
     public async Task Downloads_the_image_from_the_url_and_stores_it_as_is()
@@ -107,24 +105,6 @@ public sealed class ImageDownloaderTests
             .DownloadAsync(new Uri("http://fixtures.test/images/gibt-es-nicht.jpg"), CancellationToken.None);
 
         Assert.IsNull(image);
-    }
-
-    [TestMethod]
-    public async Task Has_no_image_when_the_bytes_are_over_the_cap()
-    {
-        var image = await Create(Serving(Jpeg), maxBytes: Jpeg.Length - 1)
-            .DownloadAsync(new Uri("http://cdn.test/a.jpg"), CancellationToken.None);
-
-        Assert.IsNull(image);
-    }
-
-    [TestMethod]
-    public async Task Keeps_an_image_exactly_at_the_cap()
-    {
-        var image = await Create(Serving(Jpeg), maxBytes: Jpeg.Length)
-            .DownloadAsync(new Uri("http://cdn.test/a.jpg"), CancellationToken.None);
-
-        Assert.IsNotNull(image);
     }
 
     [TestMethod]

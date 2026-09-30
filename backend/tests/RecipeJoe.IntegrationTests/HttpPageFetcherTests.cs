@@ -9,7 +9,7 @@ using WireMock.Server;
 
 namespace RecipeJoe.IntegrationTests;
 
-/// <summary>The real HttpClient adapter, wired through AddImport(), against WireMock on loopback.</summary>
+/// <summary>The real HttpClient adapter plus the fetch policy, wired through AddImport(), against WireMock on loopback.</summary>
 [TestClass]
 public sealed class HttpPageFetcherTests
 {
@@ -23,7 +23,7 @@ public sealed class HttpPageFetcherTests
 
     private Uri Url(string path = "/page") => new($"{_server.Url}{path}");
 
-    private static IPageFetcher CreateFetcher(params (string Key, string Value)[] settings)
+    private static FetchPolicy CreateFetchPolicy(params (string Key, string Value)[] settings)
     {
         var config = new ConfigurationBuilder()
             .AddInMemoryCollection(settings.ToDictionary(s => s.Key, s => (string?)s.Value))
@@ -33,11 +33,11 @@ public sealed class HttpPageFetcherTests
             .AddSingleton<IConfiguration>(config)
             .AddImport()
             .BuildServiceProvider()
-            .GetRequiredService<IPageFetcher>();
+            .GetRequiredService<FetchPolicy>();
     }
 
-    private static IPageFetcher AllowLoopback(params (string Key, string Value)[] extra) =>
-        CreateFetcher([("Import:AllowedHosts:0", "localhost"), ("Import:AllowedHosts:1", "127.0.0.1"), .. extra]);
+    private static FetchPolicy AllowLoopback(params (string Key, string Value)[] extra) =>
+        CreateFetchPolicy([("Import:AllowedHosts:0", "localhost"), ("Import:AllowedHosts:1", "127.0.0.1"), .. extra]);
 
     private void Respond(string path, IResponseBuilder response) =>
         _server.Given(Request.Create().WithPath(path)).RespondWith(response);
@@ -50,7 +50,7 @@ public sealed class HttpPageFetcherTests
     {
         Respond("/page", Html("<p>hello</p>"));
 
-        var result = await AllowLoopback().FetchAsync(Url(), CancellationToken.None);
+        var result = await AllowLoopback().FetchPageAsync(Url(), CancellationToken.None);
 
         Assert.IsTrue(result.IsSuccess);
         Assert.AreEqual("<p>hello</p>", Encoding.UTF8.GetString(result.Value.Bytes));
@@ -108,7 +108,7 @@ public sealed class HttpPageFetcherTests
     {
         Respond("/pic", Response.Create().WithHeader("Content-Type", "image/jpeg").WithBody([0xFF, 0xD8, 0xFF]));
 
-        var result = await CreateFetcher().FetchImageAsync(Url("/pic"), CancellationToken.None);
+        var result = await CreateFetchPolicy().FetchImageAsync(Url("/pic"), CancellationToken.None);
 
         Assert.AreEqual(ImportFailure.ForbiddenAddress, result.Failure);
     }
@@ -118,7 +118,7 @@ public sealed class HttpPageFetcherTests
     {
         Respond("/page", Response.Create().WithHeader("Content-Type", "application/xhtml+xml").WithBody("<html/>"));
 
-        Assert.IsTrue((await AllowLoopback().FetchAsync(Url(), CancellationToken.None)).IsSuccess);
+        Assert.IsTrue((await AllowLoopback().FetchPageAsync(Url(), CancellationToken.None)).IsSuccess);
     }
 
     [TestMethod]
@@ -126,7 +126,7 @@ public sealed class HttpPageFetcherTests
     {
         Respond("/page", Html("<p>zipped</p>").WithHeader("Content-Encoding", "gzip").WithBody(Gzip("<p>zipped</p>")));
 
-        var result = await AllowLoopback().FetchAsync(Url(), CancellationToken.None);
+        var result = await AllowLoopback().FetchPageAsync(Url(), CancellationToken.None);
 
         Assert.AreEqual("<p>zipped</p>", Encoding.UTF8.GetString(result.Value.Bytes));
     }
@@ -145,7 +145,7 @@ public sealed class HttpPageFetcherTests
     {
         Respond("/page", Response.Create().WithStatusCode(status).WithHeader("Content-Type", "text/html").WithBody("x"));
 
-        var result = await AllowLoopback().FetchAsync(Url(), CancellationToken.None);
+        var result = await AllowLoopback().FetchPageAsync(Url(), CancellationToken.None);
 
         Assert.AreEqual(Enum.Parse<ImportFailure>(expectedKind), result.Failure);
     }
@@ -155,7 +155,7 @@ public sealed class HttpPageFetcherTests
     {
         Respond("/page", Html().WithHeader("cf-mitigated", "challenge"));
 
-        Assert.AreEqual(ImportFailure.Blocked, (await AllowLoopback().FetchAsync(Url(), CancellationToken.None)).Failure);
+        Assert.AreEqual(ImportFailure.Blocked, (await AllowLoopback().FetchPageAsync(Url(), CancellationToken.None)).Failure);
     }
 
     [TestMethod]
@@ -163,7 +163,7 @@ public sealed class HttpPageFetcherTests
     {
         Respond("/page", Html("<html><head><title>Just a moment...</title></head></html>"));
 
-        Assert.AreEqual(ImportFailure.Blocked, (await AllowLoopback().FetchAsync(Url(), CancellationToken.None)).Failure);
+        Assert.AreEqual(ImportFailure.Blocked, (await AllowLoopback().FetchPageAsync(Url(), CancellationToken.None)).Failure);
     }
 
     [TestMethod]
@@ -177,7 +177,7 @@ public sealed class HttpPageFetcherTests
                 .WithBody("<html><head><title>Just a moment...</title></head></html>")
         );
 
-        Assert.AreEqual(ImportFailure.Blocked, (await AllowLoopback().FetchAsync(Url(), CancellationToken.None)).Failure);
+        Assert.AreEqual(ImportFailure.Blocked, (await AllowLoopback().FetchPageAsync(Url(), CancellationToken.None)).Failure);
     }
 
     [TestMethod]
@@ -185,7 +185,7 @@ public sealed class HttpPageFetcherTests
     {
         Respond("/page", Response.Create().WithHeader("Content-Type", "application/json").WithBody("{}"));
 
-        Assert.AreEqual(ImportFailure.BadResponse, (await AllowLoopback().FetchAsync(Url(), CancellationToken.None)).Failure);
+        Assert.AreEqual(ImportFailure.BadResponse, (await AllowLoopback().FetchPageAsync(Url(), CancellationToken.None)).Failure);
     }
 
     [TestMethod]
@@ -195,7 +195,7 @@ public sealed class HttpPageFetcherTests
         Respond("/middle", Response.Create().WithStatusCode(302).WithHeader("Location", Url("/page").ToString()));
         Respond("/page", Html("<p>arrived</p>"));
 
-        var result = await AllowLoopback().FetchAsync(Url("/start"), CancellationToken.None);
+        var result = await AllowLoopback().FetchPageAsync(Url("/start"), CancellationToken.None);
 
         Assert.AreEqual("<p>arrived</p>", Encoding.UTF8.GetString(result.Value.Bytes));
     }
@@ -206,7 +206,7 @@ public sealed class HttpPageFetcherTests
         Respond("/start", Response.Create().WithStatusCode(301).WithHeader("Location", "/moved/page"));
         Respond("/moved/page", Html());
 
-        var result = await AllowLoopback().FetchAsync(Url("/start"), CancellationToken.None);
+        var result = await AllowLoopback().FetchPageAsync(Url("/start"), CancellationToken.None);
 
         Assert.AreEqual(Url("/moved/page"), result.Value.Url);
     }
@@ -216,7 +216,7 @@ public sealed class HttpPageFetcherTests
     {
         Respond("/page", Html());
 
-        var result = await AllowLoopback().FetchAsync(Url(), CancellationToken.None);
+        var result = await AllowLoopback().FetchPageAsync(Url(), CancellationToken.None);
 
         Assert.AreEqual(Url(), result.Value.Url);
     }
@@ -229,7 +229,7 @@ public sealed class HttpPageFetcherTests
             Respond($"/r{i}", Response.Create().WithStatusCode(302).WithHeader("Location", $"/r{i + 1}"));
         }
 
-        var result = await AllowLoopback().FetchAsync(Url("/r0"), CancellationToken.None);
+        var result = await AllowLoopback().FetchPageAsync(Url("/r0"), CancellationToken.None);
 
         Assert.AreEqual(ImportFailure.BadResponse, result.Failure);
     }
@@ -244,7 +244,7 @@ public sealed class HttpPageFetcherTests
 
         Respond("/r5", Html());
 
-        Assert.IsTrue((await AllowLoopback().FetchAsync(Url("/r0"), CancellationToken.None)).IsSuccess);
+        Assert.IsTrue((await AllowLoopback().FetchPageAsync(Url("/r0"), CancellationToken.None)).IsSuccess);
     }
 
     [TestMethod]
@@ -252,7 +252,7 @@ public sealed class HttpPageFetcherTests
     {
         Respond("/page", Response.Create().WithStatusCode(302).WithHeader("Location", "ftp://example.com/x"));
 
-        Assert.AreEqual(ImportFailure.BadResponse, (await AllowLoopback().FetchAsync(Url(), CancellationToken.None)).Failure);
+        Assert.AreEqual(ImportFailure.BadResponse, (await AllowLoopback().FetchPageAsync(Url(), CancellationToken.None)).Failure);
     }
 
     [TestMethod]
@@ -260,7 +260,7 @@ public sealed class HttpPageFetcherTests
     {
         Respond("/page", Response.Create().WithStatusCode(302));
 
-        Assert.AreEqual(ImportFailure.BadResponse, (await AllowLoopback().FetchAsync(Url(), CancellationToken.None)).Failure);
+        Assert.AreEqual(ImportFailure.BadResponse, (await AllowLoopback().FetchPageAsync(Url(), CancellationToken.None)).Failure);
     }
 
     [TestMethod]
@@ -268,7 +268,7 @@ public sealed class HttpPageFetcherTests
     {
         Respond("/page", Html(new string('a', 2000)));
 
-        var result = await AllowLoopback(("Import:MaxBytes", "1000")).FetchAsync(Url(), CancellationToken.None);
+        var result = await AllowLoopback(("Import:MaxBytes", "1000")).FetchPageAsync(Url(), CancellationToken.None);
 
         Assert.AreEqual(ImportFailure.BadResponse, result.Failure);
     }
@@ -285,7 +285,7 @@ public sealed class HttpPageFetcherTests
                 .WithBody(new string('a', 2000))
         );
 
-        var result = await AllowLoopback(("Import:MaxBytes", "1000")).FetchAsync(Url(), CancellationToken.None);
+        var result = await AllowLoopback(("Import:MaxBytes", "1000")).FetchPageAsync(Url(), CancellationToken.None);
 
         Assert.AreEqual(ImportFailure.BadResponse, result.Failure);
     }
@@ -295,7 +295,7 @@ public sealed class HttpPageFetcherTests
     {
         Respond("/page", Html().WithDelay(TimeSpan.FromSeconds(5)));
 
-        var result = await AllowLoopback(("Import:Timeout", "00:00:00.300")).FetchAsync(Url(), CancellationToken.None);
+        var result = await AllowLoopback(("Import:Timeout", "00:00:00.300")).FetchPageAsync(Url(), CancellationToken.None);
 
         Assert.AreEqual(ImportFailure.Unreachable, result.Failure);
     }
@@ -306,7 +306,7 @@ public sealed class HttpPageFetcherTests
         Respond("/page", Html().WithDelay(TimeSpan.FromSeconds(5)));
         using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(200));
 
-        await Assert.ThrowsAsync<TaskCanceledException>(() => AllowLoopback().FetchAsync(Url(), cts.Token));
+        await Assert.ThrowsAsync<TaskCanceledException>(() => AllowLoopback().FetchPageAsync(Url(), cts.Token));
     }
 
     [TestMethod]
@@ -315,7 +315,7 @@ public sealed class HttpPageFetcherTests
         var closed = new Uri($"http://127.0.0.1:{_server.Ports[0]}/");
         _server.Stop();
 
-        var result = await AllowLoopback().FetchAsync(closed, CancellationToken.None);
+        var result = await AllowLoopback().FetchPageAsync(closed, CancellationToken.None);
 
         Assert.AreEqual(ImportFailure.Unreachable, result.Failure);
     }
@@ -323,7 +323,7 @@ public sealed class HttpPageFetcherTests
     [TestMethod]
     public async Task Unknown_host_is_unreachable()
     {
-        var result = await AllowLoopback().FetchAsync(new Uri("http://no-such-host.invalid/"), CancellationToken.None);
+        var result = await AllowLoopback().FetchPageAsync(new Uri("http://no-such-host.invalid/"), CancellationToken.None);
 
         Assert.AreEqual(ImportFailure.Unreachable, result.Failure);
     }
@@ -333,7 +333,7 @@ public sealed class HttpPageFetcherTests
     {
         Respond("/page", Html());
 
-        var result = await CreateFetcher().FetchAsync(Url(), CancellationToken.None);
+        var result = await CreateFetchPolicy().FetchPageAsync(Url(), CancellationToken.None);
 
         Assert.AreEqual(ImportFailure.ForbiddenAddress, result.Failure);
         Assert.IsEmpty(_server.LogEntries, "the request must never reach the server");
@@ -346,9 +346,9 @@ public sealed class HttpPageFetcherTests
         var target = new UriBuilder(Url()) { Host = "localhost" }.Uri;
         Respond("/start", Response.Create().WithStatusCode(302).WithHeader("Location", target.ToString()));
         Respond("/page", Html());
-        var fetcher = CreateFetcher(("Import:AllowedHosts:0", "127.0.0.1"));
+        var fetcher = CreateFetchPolicy(("Import:AllowedHosts:0", "127.0.0.1"));
 
-        var result = await fetcher.FetchAsync(Url("/start"), CancellationToken.None);
+        var result = await fetcher.FetchPageAsync(Url("/start"), CancellationToken.None);
 
         Assert.AreEqual(ImportFailure.ForbiddenAddress, result.Failure);
     }

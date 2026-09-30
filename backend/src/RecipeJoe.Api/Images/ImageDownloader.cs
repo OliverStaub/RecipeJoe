@@ -1,10 +1,9 @@
-using Microsoft.Extensions.Options;
 using RecipeJoe.Api.Import;
 
 namespace RecipeJoe.Api.Images;
 
 /// <summary>Downloads and validates a Recipe's image. Every failure is logged and yields no image, never an Import failure.</summary>
-internal sealed partial class ImageDownloader(IPageFetcher fetcher, IOptions<ImportOptions> options, ILogger<ImageDownloader> logger)
+internal sealed partial class ImageDownloader(FetchPolicy fetchPolicy, ILogger<ImageDownloader> logger)
 {
     public async Task<ImageFile?> DownloadAsync(Uri? url, CancellationToken cancellationToken)
     {
@@ -13,7 +12,7 @@ internal sealed partial class ImageDownloader(IPageFetcher fetcher, IOptions<Imp
             return null;
         }
 
-        var fetched = await fetcher.FetchImageAsync(url, cancellationToken);
+        var fetched = await fetchPolicy.FetchImageAsync(url, cancellationToken);
         if (!fetched.IsSuccess)
         {
             LogDownloadFailed(url, fetched.Failure);
@@ -21,12 +20,6 @@ internal sealed partial class ImageDownloader(IPageFetcher fetcher, IOptions<Imp
         }
 
         var bytes = fetched.Value.Bytes;
-        if (bytes.Length > options.Value.MaxBytes)
-        {
-            LogTooLarge(url, bytes.Length, options.Value.MaxBytes);
-            return null;
-        }
-
         if (ContentTypeOf(bytes) is not { } contentType)
         {
             LogUnsupportedFormat(url);
@@ -49,9 +42,6 @@ internal sealed partial class ImageDownloader(IPageFetcher fetcher, IOptions<Imp
 
     [LoggerMessage(LogLevel.Warning, "Image {Url} skipped: download failed with {Failure}")]
     private partial void LogDownloadFailed(Uri url, ImportFailure failure);
-
-    [LoggerMessage(LogLevel.Warning, "Image {Url} skipped: {Length} bytes is over the {Max} byte cap")]
-    private partial void LogTooLarge(Uri url, int length, int max);
 
     [LoggerMessage(LogLevel.Warning, "Image {Url} skipped: not a jpeg, png, webp or gif")]
     private partial void LogUnsupportedFormat(Uri url);

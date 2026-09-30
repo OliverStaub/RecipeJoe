@@ -3,7 +3,7 @@ using RecipeJoe.Api.Import;
 
 namespace RecipeJoe.UnitTests.Import;
 
-/// <summary>Serves fixtures/ at http://fixtures.test/; any other host 404s. <c>http://short.test/{name}</c> redirects to <c>fixtures.test/recipes/{name}.html</c>, like a link shortener.</summary>
+/// <summary>Raw responses only, so the <see cref="FetchPolicy"/> judges them as in production. Serves fixtures/ at http://fixtures.test/; any other host 404s. <c>http://short.test/{name}</c> redirects to <c>fixtures.test/recipes/{name}.html</c>, like a link shortener.</summary>
 internal sealed class FixturePageFetcher : IPageFetcher
 {
     private const string FixturesHost = "fixtures.test";
@@ -11,11 +11,7 @@ internal sealed class FixturePageFetcher : IPageFetcher
 
     private static readonly string Root = Path.Combine(AppContext.BaseDirectory, "fixtures");
 
-    public Task<Result<FetchedContent, ImportFailure>> FetchAsync(Uri url, CancellationToken cancellationToken) => Serve(url);
-
-    public Task<Result<FetchedContent, ImportFailure>> FetchImageAsync(Uri url, CancellationToken cancellationToken) => Serve(url);
-
-    private static Task<Result<FetchedContent, ImportFailure>> Serve(Uri url)
+    public Task<Result<RawResponse, ImportFailure>> FetchAsync(Uri url, FetchKind kind, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(url);
 
@@ -25,11 +21,11 @@ internal sealed class FixturePageFetcher : IPageFetcher
         }
 
         var file = Path.Combine(Root, url.AbsolutePath.TrimStart('/'));
-        var result = url.Host == FixturesHost && File.Exists(file)
-            ? Result<FetchedContent, ImportFailure>.Ok(new FetchedContent(File.ReadAllBytes(file), ContentTypeOf(file), url))
-            : Result<FetchedContent, ImportFailure>.Fail(ImportFailure.NotFound);
+        var response = url.Host == FixturesHost && File.Exists(file)
+            ? new RawResponse(200, ContentTypeOf(file), null, File.ReadAllBytes(file), url)
+            : new RawResponse(404, "text/html", null, [], url);
 
-        return Task.FromResult(result);
+        return Task.FromResult(Result<RawResponse, ImportFailure>.Ok(response));
     }
 
     private static string ContentTypeOf(string file) =>

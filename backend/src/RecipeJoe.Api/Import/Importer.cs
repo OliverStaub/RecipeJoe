@@ -4,7 +4,7 @@ using RecipeJoe.Api.Recipes;
 namespace RecipeJoe.Api.Import;
 
 /// <summary>URL → Recipe draft: fetch → decode → parse → download image. Persists nothing; relative links resolve against the page after redirects, which is also the draft's Source. A failed image only leaves the draft without one.</summary>
-internal sealed class Importer(IPageFetcher fetcher, ImageDownloader images)
+internal sealed class Importer(FetchPolicy fetchPolicy, ImageDownloader images)
 {
     public async Task<Result<RecipeDraft, ImportFailure>> ImportAsync(string url, CancellationToken cancellationToken)
     {
@@ -16,7 +16,7 @@ internal sealed class Importer(IPageFetcher fetcher, ImageDownloader images)
             return Result<RecipeDraft, ImportFailure>.Fail(ImportFailure.InvalidUrl);
         }
 
-        var page = await fetcher.FetchAsync(pageUrl, cancellationToken);
+        var page = await fetchPolicy.FetchPageAsync(pageUrl, cancellationToken);
         if (!page.IsSuccess)
         {
             return Result<RecipeDraft, ImportFailure>.Fail(page.Failure);
