@@ -20,13 +20,22 @@ internal sealed class LlmOptions
 
     public string? ApiKey { get; set; }
 
+    /// <summary>OpenRouter upstream providers to use, comma separated and in order of preference (e.g. "Google AI Studio,Vertex"); null leaves routing to OpenRouter. When set, there is no fallback to other providers.</summary>
+    public string? PinnedProviders { get; set; }
+
+    public IReadOnlyList<string> PinnedProviderNames =>
+        PinnedProviders?.Split(',', StringSplitOptions.TrimEntries) ?? [];
+
+    /// <summary>Model for the cheap "is there a recipe" pre-call; null reuses <see cref="ResolvedModel"/>.</summary>
+    public string? RecipeCheckModel { get; set; }
+
     /// <summary>Per request, covers a long generation.</summary>
     public TimeSpan Timeout { get; set; } = TimeSpan.FromMinutes(3);
 
     public string ResolvedModel =>
         Model ?? Provider switch
         {
-            LlmProvider.OpenRouter => "google/gemini-2.5-flash-lite",
+            LlmProvider.OpenRouter => "deepseek/deepseek-v4-flash",
             _ => throw new NotSupportedException($"LLM provider {Provider} has no default model."),
         };
 
@@ -52,6 +61,16 @@ internal sealed class LlmOptionsValidator : IValidateOptions<LlmOptions>
         if (options.Model is not null && string.IsNullOrWhiteSpace(options.Model))
         {
             errors.Add("Llm:Model must not be blank.");
+        }
+
+        if (options.RecipeCheckModel is not null && string.IsNullOrWhiteSpace(options.RecipeCheckModel))
+        {
+            errors.Add("Llm:RecipeCheckModel must not be blank.");
+        }
+
+        if (options.PinnedProviders is not null && options.PinnedProviderNames.Any(string.IsNullOrEmpty))
+        {
+            errors.Add("Llm:PinnedProviders must be a comma separated list of provider names.");
         }
 
         if (options.BaseUrl is not null && !Uri.TryCreate(options.BaseUrl, UriKind.Absolute, out _))

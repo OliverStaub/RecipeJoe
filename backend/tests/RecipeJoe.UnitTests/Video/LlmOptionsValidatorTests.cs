@@ -26,7 +26,7 @@ public sealed class LlmOptionsValidatorTests
 
         options.ApiKey = "sk-test";
         Assert.IsTrue(IsValid(options));
-        Assert.AreEqual("google/gemini-2.5-flash-lite", options.ResolvedModel);
+        Assert.AreEqual("deepseek/deepseek-v4-flash", options.ResolvedModel);
         Assert.AreEqual(new Uri("https://openrouter.ai/api/v1"), options.ResolvedBaseUrl);
     }
 
@@ -34,6 +34,9 @@ public sealed class LlmOptionsValidatorTests
     public void A_blank_model_a_relative_base_url_a_non_positive_timeout_or_context_and_an_unknown_provider_are_invalid()
     {
         Assert.IsFalse(IsValid(new LlmOptions { ApiKey = "k", Model = " " }));
+        Assert.IsFalse(IsValid(new LlmOptions { ApiKey = "k", RecipeCheckModel = " " }));
+        Assert.IsFalse(IsValid(new LlmOptions { ApiKey = "k", PinnedProviders = " " }));
+        Assert.IsFalse(IsValid(new LlmOptions { ApiKey = "k", PinnedProviders = "Vertex,,Azure" }));
         Assert.IsFalse(IsValid(new LlmOptions { ApiKey = "k", BaseUrl = "not a url" }));
         Assert.IsFalse(IsValid(new LlmOptions { ApiKey = "k", Timeout = TimeSpan.Zero }));
         Assert.IsFalse(IsValid(new LlmOptions { Provider = (LlmProvider)99 }));

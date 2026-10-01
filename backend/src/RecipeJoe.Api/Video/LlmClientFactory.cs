@@ -1,5 +1,6 @@
 using System.ClientModel;
 using System.ClientModel.Primitives;
+using System.Text.Json;
 using Microsoft.Extensions.AI;
 using OpenAI;
 using OpenAI.Chat;
@@ -19,6 +20,22 @@ internal static class LlmClientFactory
             _ => throw new NotSupportedException($"LLM provider {options.Provider} is not supported yet."),
         };
 
+    /// <summary>The upstream provider OpenRouter reports in the reply's top-level <c>provider</c> field, or null when unknown.</summary>
+    public static string? ServingProvider(ChatResponse response)
+    {
+#pragma warning disable SCME0001 // JsonPatch is the SDK's only view of fields it does not model.
+        return response.RawRepresentation is ChatCompletion completion && completion.Patch.TryGetValue("$.provider"u8, out string? provider) ? provider : null;
+#pragma warning restore SCME0001
+    }
+
+    /// <summary>What OpenRouter charged for the call in USD (the reply's <c>usage.cost</c>), or null when the reply doesn't say.</summary>
+    public static decimal? Cost(ChatResponse response)
+    {
+#pragma warning disable SCME0001 // JsonPatch is the SDK's only view of fields it does not model.
+        return response.RawRepresentation is ChatCompletion { Usage: { } usage } && usage.Patch.TryGetValue("$.cost"u8, out decimal cost) ? cost : null;
+#pragma warning restore SCME0001
+    }
+
     private static RequireParametersChatClient CreateOpenRouter(LlmOptions options)
     {
         var client = new OpenAIClient(
@@ -34,12 +51,16 @@ internal static class LlmClientFactory
             }
         );
 
-        return new RequireParametersChatClient(client.GetChatClient(options.ResolvedModel).AsIChatClient());
+        return new RequireParametersChatClient(client.GetChatClient(options.ResolvedModel).AsIChatClient(), options.PinnedProviderNames);
     }
 
-    /// <summary>OpenRouter routes to any upstream provider by default, including ones that ignore <c>response_format</c>; <c>provider.require_parameters</c> restricts routing to providers that honour every parameter we send.</summary>
-    private sealed class RequireParametersChatClient(IChatClient inner) : DelegatingChatClient(inner)
+    /// <summary>OpenRouter routes to any upstream provider by default, including ones that ignore <c>response_format</c>; <c>provider.require_parameters</c> restricts routing to providers that honour every parameter we send. Pinned providers are tried in order and never replaced by others, so a golden run is reproducible and a failure has a culprit.</summary>
+    private sealed class RequireParametersChatClient(IChatClient inner, IReadOnlyList<string> pinnedProviders) : DelegatingChatClient(inner)
     {
+        private readonly string providerPreferences = pinnedProviders.Count == 0
+            ? """{"require_parameters":true}"""
+            : JsonSerializer.Serialize(new { require_parameters = true, order = pinnedProviders, allow_fallbacks = false });
+
         public override Task<ChatResponse> GetResponseAsync(IEnumerable<Microsoft.Extensions.AI.ChatMessage> messages, ChatOptions? options = null, CancellationToken cancellationToken = default)
         {
             options = options?.Clone() ?? new ChatOptions();
@@ -51,7 +72,7 @@ internal static class LlmClientFactory
             {
                 var raw = previous?.Invoke(client) as ChatCompletionOptions ?? new ChatCompletionOptions();
 #pragma warning disable SCME0001 // JsonPatch is the SDK's only way to add a non-OpenAI request field.
-                raw.Patch.Set("$.provider"u8, BinaryData.FromString("""{"require_parameters":true}"""));
+                raw.Patch.Set("$.provider"u8, BinaryData.FromString(providerPreferences));
 #pragma warning restore SCME0001
                 return raw;
             };

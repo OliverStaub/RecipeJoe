@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <EmbeddedResource Include="Video/RecipeExtractionPrompt.md" LogicalName="RecipeExtractionPrompt.md" />
+    <EmbeddedResource Include="Video/RecipeCheckPrompt.md" LogicalName="RecipeCheckPrompt.md" />
   </ItemGroup>
 
   <ItemGroup>
@@ -27,6 +28,7 @@
     <InternalsVisibleTo Include="RecipeJoe.ContractTests" />
     <InternalsVisibleTo Include="RecipeJoe.IntegrationTests" />
     <InternalsVisibleTo Include="RecipeJoe.GoldenTests" />
+    <InternalsVisibleTo Include="RecipeJoe.Sweep" />
   </ItemGroup>
 
 </Project>

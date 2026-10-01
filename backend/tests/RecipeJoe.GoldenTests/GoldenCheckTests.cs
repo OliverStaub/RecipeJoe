@@ -84,6 +84,8 @@ public sealed class GoldenCheckTests
             BaseUrl = Environment.GetEnvironmentVariable("Llm__BaseUrl"),
             Model = Environment.GetEnvironmentVariable("Llm__Model"),
             ApiKey = Environment.GetEnvironmentVariable("Llm__ApiKey"),
+            RecipeCheckModel = Environment.GetEnvironmentVariable("Llm__RecipeCheckModel"),
+            PinnedProviders = Environment.GetEnvironmentVariable("Llm__PinnedProviders"),
         };
         var providerName = Environment.GetEnvironmentVariable("Llm__Provider");
         if (providerName is not null)

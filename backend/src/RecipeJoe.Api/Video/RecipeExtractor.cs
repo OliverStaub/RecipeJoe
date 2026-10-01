@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Reflection;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Options;
 using RecipeJoe.Api.Import;
@@ -21,59 +22,44 @@ internal sealed record ExtractedRecipe(
     [property: Description("One plain string per preparation step, in order. Never an object.")][property: MinLength(1)] IReadOnlyList<string> Steps
 );
 
-/// <summary>Video text → one <see cref="ParsedRecipe"/> per dish, written by an LLM. Owns the prompt, the output schema, validation and the timeout; text in, text out, so <see cref="ParsedRecipe.ImageUrl"/> is always null. Provider details stay in the logs: callers only see the failure kind.</summary>
+/// <summary>The pre-call's answer: does the video text hold a cookable recipe?</summary>
+internal sealed record RecipeCheckReply(
+    [property: JsonRequired][property: Description("True only if the text contains ingredients or preparation of at least one dish; false for mere dish names.")] bool ContainsRecipe
+);
+
+/// <summary>Video text → one <see cref="ParsedRecipe"/> per dish, written by an LLM. Asks a cheap yes/no "is there a recipe" question first, then extracts. Owns the prompts, the output schemas, validation and the timeout; text in, text out, so <see cref="ParsedRecipe.ImageUrl"/> is always null. Provider details stay in the logs: callers only see the failure kind.</summary>
 internal sealed partial class RecipeExtractor(IChatClient chat, IOptions<LlmOptions> options, ILogger<RecipeExtractor> logger)
 {
-    private static readonly Lazy<string> Prompt = new(LoadPrompt);
+    private const string ExtractionTask = "Schreibe für jedes Gericht, dessen Zutaten und Zubereitung im Text stehen, ein Rezept. Gibt es keines, antworte mit {\"recipes\": []}. Antworte nur als JSON im beschriebenen Format.";
+    private const string CheckTask = "Entscheide, ob der Text ein kochbares Rezept enthält. Antworte nur als JSON im beschriebenen Format.";
+
+    private static readonly Lazy<string> Prompt = new(() => LoadPrompt("RecipeExtractionPrompt.md"));
+    private static readonly Lazy<string> CheckPrompt = new(() => LoadPrompt("RecipeCheckPrompt.md"));
 
     public async Task<Result<IReadOnlyList<ParsedRecipe>, ImportFailure>> ExtractAsync(VideoText video, CancellationToken cancellationToken)
     {
-        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        timeout.CancelAfter(options.Value.Timeout);
-
-        ExtractionReply reply;
-        try
+        var check = await AskAsync<RecipeCheckReply>(CheckPrompt.Value, Describe(video, CheckTask), options.Value.RecipeCheckModel, cancellationToken);
+        if (!check.IsSuccess)
         {
-            var response = await chat.GetResponseAsync<ExtractionReply>(
-                [new ChatMessage(ChatRole.System, Prompt.Value), new ChatMessage(ChatRole.User, Describe(video))],
-                AIJsonUtilities.DefaultOptions,
-                new ChatOptions { Temperature = 0.2f },
-                useJsonSchemaResponseFormat: true,
-                cancellationToken: timeout.Token
-            );
-
-            if (!response.TryGetResult(out var parsedReply) || parsedReply?.Recipes is null)
-            {
-                LogBadReply(response.Text);
-                return Fail(ImportFailure.LlmBadOutput);
-            }
-
-            reply = parsedReply;
+            return Fail(check.Failure);
         }
-        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+
+        if (!check.Value.ContainsRecipe)
         {
-            LogTimedOut(options.Value.Timeout);
-            return Fail(ImportFailure.LlmUnavailable);
+            return Fail(ImportFailure.NoRecipe);
         }
-        catch (JsonException ex)
+
+        var asked = await AskAsync<ExtractionReply>(Prompt.Value, Describe(video, ExtractionTask), null, cancellationToken);
+        if (!asked.IsSuccess)
         {
-            LogBadReply(ex.Message);
+            return Fail(asked.Failure);
+        }
+
+        var reply = asked.Value;
+        if (reply.Recipes is null)
+        {
+            LogBadReply("no recipes property");
             return Fail(ImportFailure.LlmBadOutput);
-        }
-        catch (Exception ex) when (ex is not OperationCanceledException && FindProviderError(ex) is { } providerError)
-        {
-            LogProviderError(providerError.Provider ?? "unknown", providerError.Message);
-            return Fail(ImportFailure.LlmUnavailable);
-        }
-        catch (Exception ex) when (ex is not OperationCanceledException && IsContextOverflow(ex))
-        {
-            LogContextOverflow(ex.Message);
-            return Fail(ImportFailure.VideoTooLong);
-        }
-        catch (Exception ex) when (ex is not OperationCanceledException)
-        {
-            LogProviderFailed(ex);
-            return Fail(ImportFailure.LlmUnavailable);
         }
 
         if (reply.Recipes.Count == 0)
@@ -95,6 +81,60 @@ internal sealed partial class RecipeExtractor(IChatClient chat, IOptions<LlmOpti
         }
 
         return valid.Count == 0 ? Fail(ImportFailure.LlmBadOutput) : Result<IReadOnlyList<ParsedRecipe>, ImportFailure>.Ok(valid);
+    }
+
+    /// <summary>One structured call; every provider problem becomes a failure kind. <paramref name="model"/> null keeps the client's model.</summary>
+    private async Task<Result<T, ImportFailure>> AskAsync<T>(string system, string user, string? model, CancellationToken cancellationToken)
+        where T : class
+    {
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeout.CancelAfter(options.Value.Timeout);
+
+        try
+        {
+            var response = await chat.GetResponseAsync<T>(
+                [new ChatMessage(ChatRole.System, system), new ChatMessage(ChatRole.User, user)],
+                AIJsonUtilities.DefaultOptions,
+                new ChatOptions { Temperature = 0.2f, ModelId = model },
+                useJsonSchemaResponseFormat: true,
+                cancellationToken: timeout.Token
+            );
+
+            LogServedBy(typeof(T).Name, response.ModelId ?? model ?? "default", LlmClientFactory.ServingProvider(response) ?? "unknown");
+
+            if (!response.TryGetResult(out var parsed) || parsed is null)
+            {
+                LogBadReply(response.Text);
+                return Result<T, ImportFailure>.Fail(ImportFailure.LlmBadOutput);
+            }
+
+            return Result<T, ImportFailure>.Ok(parsed);
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            LogTimedOut(options.Value.Timeout);
+            return Result<T, ImportFailure>.Fail(ImportFailure.LlmUnavailable);
+        }
+        catch (JsonException ex)
+        {
+            LogBadReply(ex.Message);
+            return Result<T, ImportFailure>.Fail(ImportFailure.LlmBadOutput);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException && FindProviderError(ex) is { } providerError)
+        {
+            LogProviderError(providerError.Provider ?? "unknown", providerError.Message);
+            return Result<T, ImportFailure>.Fail(ImportFailure.LlmUnavailable);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException && IsContextOverflow(ex))
+        {
+            LogContextOverflow(ex.Message);
+            return Result<T, ImportFailure>.Fail(ImportFailure.VideoTooLong);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            LogProviderFailed(ex);
+            return Result<T, ImportFailure>.Fail(ImportFailure.LlmUnavailable);
+        }
     }
 
     private static ProviderErrorException? FindProviderError(Exception exception)
@@ -159,7 +199,7 @@ internal sealed partial class RecipeExtractor(IChatClient chat, IOptions<LlmOpti
 
     private static TimeSpan? Minutes(int? minutes) => minutes is > 0 ? TimeSpan.FromMinutes(minutes.Value) : null;
 
-    private static string Describe(VideoText video) =>
+    private static string Describe(VideoText video, string task) =>
         $$"""
         Titel: {{video.Title}}
 
@@ -169,16 +209,19 @@ internal sealed partial class RecipeExtractor(IChatClient chat, IOptions<LlmOpti
         Transkript:
         {{video.Transcript}}
 
-        Basierend auf dem Text oben: Schreibe für jedes Gericht, dessen Zutaten und Zubereitung im Text stehen, ein Rezept. Gibt es keines, antworte mit {"recipes": []}. Antworte nur als JSON im beschriebenen Format.
+        Basierend auf dem Text oben: {{task}}
         """;
 
-    private static string LoadPrompt()
+    private static string LoadPrompt(string name)
     {
-        using var stream = typeof(RecipeExtractor).Assembly.GetManifestResourceStream("RecipeExtractionPrompt.md")
-            ?? throw new InvalidOperationException("RecipeExtractionPrompt.md is not embedded.");
+        using var stream = typeof(RecipeExtractor).Assembly.GetManifestResourceStream(name)
+            ?? throw new InvalidOperationException($"{name} is not embedded.");
         using var reader = new StreamReader(stream);
         return reader.ReadToEnd();
     }
+
+    [LoggerMessage(LogLevel.Information, "{Call} answered by model {Model} via provider {Provider}")]
+    private partial void LogServedBy(string call, string model, string provider);
 
     [LoggerMessage(LogLevel.Warning, "LLM reply was unusable: {Reply}")]
     private partial void LogBadReply(string reply);

@@ -12,13 +12,19 @@ public sealed class RecipeExtractorTests
 {
     private static readonly VideoText Video = new("Zwei Kuchen", "Backen mit Oma", "Erst Teig, dann Guss.");
 
+    private const string Yes = """{"containsRecipe":true}""";
+    private const string No = """{"containsRecipe":false}""";
+
+    /// <summary>The pre-call says yes, the extraction call replies with <paramref name="json"/>.</summary>
+    private static FakeChatClient Extracting(string json) => FakeChatClient.ReplyingInTurn(Yes, json);
+
     private static RecipeExtractor CreateExtractor(IChatClient client, TimeSpan? timeout = null) =>
         new(client, Options.Create(new LlmOptions { Timeout = timeout ?? TimeSpan.FromSeconds(30) }), NullLogger<RecipeExtractor>.Instance);
 
     [TestMethod]
     public async Task A_reply_with_several_recipes_becomes_one_ParsedRecipe_per_dish_with_minutes_as_durations()
     {
-        var client = FakeChatClient.Replying("""
+        var client = Extracting("""
             {"recipes":[
               {"title":"Apfelkuchen","servings":"12 Stücke","prepMinutes":20,"cookMinutes":45,"totalMinutes":65,
                "ingredientLines":["500 g Äpfel","250 g Mehl"],"steps":["Teig kneten","Backen"]},
@@ -46,7 +52,7 @@ public sealed class RecipeExtractorTests
     [TestMethod]
     public async Task Servings_and_timings_stay_null_when_the_reply_omits_them()
     {
-        var client = FakeChatClient.Replying("""{"recipes":[{"title":"Toast","ingredientLines":["Brot"],"steps":["Rösten"]}]}""");
+        var client = Extracting("""{"recipes":[{"title":"Toast","ingredientLines":["Brot"],"steps":["Rösten"]}]}""");
 
         var result = await CreateExtractor(client).ExtractAsync(Video, CancellationToken.None);
 
@@ -60,7 +66,7 @@ public sealed class RecipeExtractorTests
     [TestMethod]
     public async Task Entries_without_a_title_ingredient_line_or_step_are_skipped_and_the_valid_ones_kept()
     {
-        var client = FakeChatClient.Replying("""
+        var client = Extracting("""
             {"recipes":[
               {"title":"  ","ingredientLines":["Brot"],"steps":["Rösten"]},
               {"title":"Ohne Zutaten","ingredientLines":[],"steps":["Rösten"]},
@@ -78,7 +84,7 @@ public sealed class RecipeExtractorTests
     [TestMethod]
     public async Task A_reply_where_every_entry_is_invalid_is_LlmBadOutput()
     {
-        var client = FakeChatClient.Replying("""{"recipes":[{"title":"Leer","ingredientLines":[],"steps":[]}]}""");
+        var client = Extracting("""{"recipes":[{"title":"Leer","ingredientLines":[],"steps":[]}]}""");
 
         var result = await CreateExtractor(client).ExtractAsync(Video, CancellationToken.None);
 
@@ -86,9 +92,81 @@ public sealed class RecipeExtractorTests
     }
 
     [TestMethod]
+    public async Task A_no_from_the_pre_call_is_NoRecipe_without_running_the_extraction()
+    {
+        var client = FakeChatClient.ReplyingInTurn(No, """{"recipes":[{"title":"Toast","ingredientLines":["Brot"],"steps":["Rösten"]}]}""");
+
+        var result = await CreateExtractor(client).ExtractAsync(Video, CancellationToken.None);
+
+        Assert.AreEqual(ImportFailure.NoRecipe, result.Failure);
+        Assert.HasCount(1, client.Requests);
+    }
+
+    [TestMethod]
+    public async Task A_yes_from_the_pre_call_runs_the_extraction_after_it()
+    {
+        var client = Extracting("""{"recipes":[{"title":"Toast","ingredientLines":["Brot"],"steps":["Rösten"]}]}""");
+
+        var result = await CreateExtractor(client).ExtractAsync(Video, CancellationToken.None);
+
+        Assert.IsTrue(result.IsSuccess);
+        Assert.HasCount(2, client.Requests);
+    }
+
+    [TestMethod]
+    [DataRow("this is not json")]
+    [DataRow("{}")]
+    [DataRow("true", DisplayName = "Bare boolean")]
+    [DataRow("""{"containsRecipe":"yes"}""")]
+    public async Task A_malformed_pre_call_reply_is_LlmBadOutput_without_running_the_extraction(string reply)
+    {
+        var client = FakeChatClient.ReplyingInTurn(reply, """{"recipes":[]}""");
+
+        var result = await CreateExtractor(client).ExtractAsync(Video, CancellationToken.None);
+
+        Assert.AreEqual(ImportFailure.LlmBadOutput, result.Failure);
+        Assert.HasCount(1, client.Requests);
+    }
+
+    [TestMethod]
+    public async Task The_pre_call_runs_on_the_configured_model_and_the_extraction_on_the_default()
+    {
+        var client = Extracting("""{"recipes":[]}""");
+        var extractor = new RecipeExtractor(client, Options.Create(new LlmOptions { RecipeCheckModel = "tiny/checker" }), NullLogger<RecipeExtractor>.Instance);
+
+        await extractor.ExtractAsync(Video, CancellationToken.None);
+
+        Assert.AreEqual("tiny/checker", client.RequestOptions[0]?.ModelId);
+        Assert.IsNull(client.RequestOptions[1]?.ModelId);
+    }
+
+    [TestMethod]
+    public async Task The_pre_call_defaults_to_the_extraction_model()
+    {
+        var client = Extracting("""{"recipes":[]}""");
+
+        await CreateExtractor(client).ExtractAsync(Video, CancellationToken.None);
+
+        Assert.IsNull(client.RequestOptions[0]?.ModelId);
+    }
+
+    [TestMethod]
+    public async Task A_provider_error_in_the_extraction_after_a_yes_is_LlmUnavailable()
+    {
+        var calls = 0;
+        var client = new FakeChatClient(() => calls++ == 0
+            ? new ChatResponse(new ChatMessage(ChatRole.Assistant, Yes))
+            : throw new HttpRequestException("boom", null, HttpStatusCode.ServiceUnavailable));
+
+        var result = await CreateExtractor(client).ExtractAsync(Video, CancellationToken.None);
+
+        Assert.AreEqual(ImportFailure.LlmUnavailable, result.Failure);
+    }
+
+    [TestMethod]
     public async Task An_empty_recipe_list_is_NoRecipe()
     {
-        var client = FakeChatClient.Replying("""{"recipes":[]}""");
+        var client = Extracting("""{"recipes":[]}""");
 
         var result = await CreateExtractor(client).ExtractAsync(Video, CancellationToken.None);
 
@@ -102,7 +180,7 @@ public sealed class RecipeExtractorTests
     [DataRow("[]", DisplayName = "Bare array")]
     public async Task Malformed_or_schema_violating_replies_are_LlmBadOutput(string reply)
     {
-        var result = await CreateExtractor(FakeChatClient.Replying(reply)).ExtractAsync(Video, CancellationToken.None);
+        var result = await CreateExtractor(Extracting(reply)).ExtractAsync(Video, CancellationToken.None);
 
         Assert.AreEqual(ImportFailure.LlmBadOutput, result.Failure);
     }
@@ -169,17 +247,17 @@ public sealed class RecipeExtractorTests
         await cts.CancelAsync();
 
         await Assert.ThrowsAsync<OperationCanceledException>(async () =>
-            await CreateExtractor(FakeChatClient.Replying("{}")).ExtractAsync(Video, cts.Token));
+            await CreateExtractor(Extracting("{}")).ExtractAsync(Video, cts.Token));
     }
 
     [TestMethod]
     public async Task The_request_carries_the_title_description_and_transcript()
     {
-        var client = FakeChatClient.Replying("""{"recipes":[]}""");
+        var client = Extracting("""{"recipes":[]}""");
 
         await CreateExtractor(client).ExtractAsync(Video, CancellationToken.None);
 
-        var sent = string.Join("\n", client.Requests.Single().Select(m => m.Text));
+        var sent = string.Join("\n", client.Requests.SelectMany(r => r).Select(m => m.Text));
         Assert.Contains("Zwei Kuchen", sent);
         Assert.Contains("Backen mit Oma", sent);
         Assert.Contains("Erst Teig, dann Guss.", sent);

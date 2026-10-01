@@ -47,7 +47,7 @@ public sealed class VideoImportPathTests
         var fetcher = new FixtureFetcher();
         var progress = new RecordingProgress<ImportStage>();
 
-        var result = await CreatePath(Video(Thumbnail), FakeChatClient.Replying(TwoRecipes), fetcher).RunAsync(VideoUrl, progress, CancellationToken.None);
+        var result = await CreatePath(Video(Thumbnail), FakeChatClient.ReplyingInTurn("""{"containsRecipe":true}""", TwoRecipes), fetcher).RunAsync(VideoUrl, progress, CancellationToken.None);
 
         Assert.IsTrue(result.IsSuccess);
         Assert.HasCount(2, result.Value);
@@ -61,7 +61,7 @@ public sealed class VideoImportPathTests
     [TestMethod]
     public async Task A_failed_thumbnail_leaves_the_drafts_without_an_image()
     {
-        var result = await CreatePath(Video(new Uri("http://fixtures.test/images/gibt-es-nicht.jpg")), FakeChatClient.Replying(TwoRecipes))
+        var result = await CreatePath(Video(new Uri("http://fixtures.test/images/gibt-es-nicht.jpg")), FakeChatClient.ReplyingInTurn("""{"containsRecipe":true}""", TwoRecipes))
             .RunAsync(VideoUrl, new RecordingProgress<ImportStage>(), CancellationToken.None);
 
         Assert.IsTrue(result.IsSuccess);
@@ -72,7 +72,7 @@ public sealed class VideoImportPathTests
     [TestMethod]
     public async Task A_video_without_a_thumbnail_leaves_the_drafts_without_an_image()
     {
-        var result = await CreatePath(Video(null), FakeChatClient.Replying(TwoRecipes))
+        var result = await CreatePath(Video(null), FakeChatClient.ReplyingInTurn("""{"containsRecipe":true}""", TwoRecipes))
             .RunAsync(VideoUrl, new RecordingProgress<ImportStage>(), CancellationToken.None);
 
         Assert.IsTrue(result.Value.All(d => d.Image is null));
@@ -81,7 +81,7 @@ public sealed class VideoImportPathTests
     [TestMethod]
     public async Task A_video_source_failure_is_passed_through_before_the_LLM_is_asked()
     {
-        var chat = FakeChatClient.Replying(TwoRecipes);
+        var chat = FakeChatClient.ReplyingInTurn("""{"containsRecipe":true}""", TwoRecipes);
         var progress = new RecordingProgress<ImportStage>();
 
         var result = await CreatePath(Result<VideoContent, ImportFailure>.Fail(ImportFailure.NoCaptions), chat)
@@ -95,7 +95,7 @@ public sealed class VideoImportPathTests
     [TestMethod]
     public async Task An_extractor_failure_is_passed_through()
     {
-        var result = await CreatePath(Video(Thumbnail), FakeChatClient.Replying("""{"recipes":[]}"""))
+        var result = await CreatePath(Video(Thumbnail), FakeChatClient.ReplyingInTurn("""{"containsRecipe":true}""", """{"recipes":[]}"""))
             .RunAsync(VideoUrl, new RecordingProgress<ImportStage>(), CancellationToken.None);
 
         Assert.AreEqual(ImportFailure.NoRecipe, result.Failure);

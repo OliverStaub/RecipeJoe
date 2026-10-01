@@ -47,6 +47,23 @@ public sealed class VideoImportTests
         _factory.LlmStub
             .Given(Request.Create().WithPath("/v1/chat/completions").UsingPost().WithBody(new WildcardMatcher($"*{videoTitle}*")))
             .RespondWith(Response.Create().WithStatusCode(status).WithHeader("Content-Type", "application/json").WithBody(status == 200 ? completion : errorBody));
+
+        if (status == 200)
+        {
+            // The "is there a recipe" pre-call carries the same text; it says yes so the extraction call (above) runs.
+            var yes = JsonSerializer.Serialize(new
+            {
+                id = "chatcmpl-check",
+                @object = "chat.completion",
+                created = 0,
+                model = "test",
+                choices = new[] { new { index = 0, message = new { role = "assistant", content = """{"containsRecipe":true}""" }, finish_reason = "stop" } },
+            });
+            _factory.LlmStub
+                .Given(Request.Create().WithPath("/v1/chat/completions").UsingPost().WithBody([new WildcardMatcher($"*{videoTitle}*"), new WildcardMatcher("*containsRecipe*")], MatchOperator.And))
+                .AtPriority(-1)
+                .RespondWith(Response.Create().WithStatusCode(200).WithHeader("Content-Type", "application/json").WithBody(yes));
+        }
     }
 
     private static async Task<Guid> StartAsync(HttpClient client, string videoId)
@@ -114,9 +131,13 @@ public sealed class VideoImportTests
 
         await WaitForOutcomeAsync(client, await StartAsync(client, "zwei-kuchen"));
 
-        var request = JsonDocument.Parse(_factory.LlmStub.LogEntries.Single().RequestMessage!.Body!).RootElement;
-        Assert.AreEqual("json_schema", request.GetProperty("response_format").GetProperty("type").GetString());
-        Assert.IsTrue(request.GetProperty("provider").GetProperty("require_parameters").GetBoolean());
+        Assert.HasCount(2, _factory.LlmStub.LogEntries);
+        foreach (var entry in _factory.LlmStub.LogEntries)
+        {
+            var request = JsonDocument.Parse(entry.RequestMessage!.Body!).RootElement;
+            Assert.AreEqual("json_schema", request.GetProperty("response_format").GetProperty("type").GetString());
+            Assert.IsTrue(request.GetProperty("provider").GetProperty("require_parameters").GetBoolean());
+        }
     }
 
     [TestMethod]

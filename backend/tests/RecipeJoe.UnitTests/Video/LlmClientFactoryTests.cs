@@ -27,8 +27,8 @@ public sealed class LlmClientFactoryTests
         Assert.AreEqual(new Uri("http://localhost:9999/v1"), metadata?.ProviderUri);
     }
 
-    [TestMethod]
-    public async Task OpenRouter_requests_a_strict_json_schema_from_providers_that_honour_it()
+    /// <summary>Sends one request through a client for <paramref name="options"/> to a local stub and returns the body the stub saw.</summary>
+    private static async Task<JsonDocument> SendAsync(LlmOptions options)
     {
         using var listener = new HttpListener();
         var prefix = $"http://127.0.0.1:{FreePort()}/";
@@ -46,10 +46,93 @@ public sealed class LlmClientFactoryTests
             return body;
         });
 
-        using var client = LlmClientFactory.Create(new LlmOptions { ApiKey = "sk-test", Model = "m", BaseUrl = prefix });
+        options.BaseUrl = prefix;
+        using var client = LlmClientFactory.Create(options);
         await client.GetResponseAsync<ExtractionReply>([new ChatMessage(ChatRole.User, "hi")], useJsonSchemaResponseFormat: true);
+        return JsonDocument.Parse(await served);
+    }
 
-        using var request = JsonDocument.Parse(await served);
+    [TestMethod]
+    public async Task Without_pinning_only_require_parameters_is_sent_for_provider_routing()
+    {
+        using var request = await SendAsync(new LlmOptions { ApiKey = "sk-test", Model = "m" });
+
+        var provider = request.RootElement.GetProperty("provider");
+        Assert.IsTrue(provider.GetProperty("require_parameters").GetBoolean());
+        Assert.IsFalse(provider.TryGetProperty("order", out _));
+        Assert.IsFalse(provider.TryGetProperty("allow_fallbacks", out _));
+    }
+
+    [TestMethod]
+    public async Task Pinned_providers_are_sent_in_order_without_fallbacks_next_to_require_parameters()
+    {
+        using var request = await SendAsync(new LlmOptions { ApiKey = "sk-test", Model = "m", PinnedProviders = "Google AI Studio, Vertex" });
+
+        var provider = request.RootElement.GetProperty("provider");
+        Assert.IsTrue(provider.GetProperty("require_parameters").GetBoolean());
+        Assert.IsFalse(provider.GetProperty("allow_fallbacks").GetBoolean());
+        Assert.IsTrue(provider.GetProperty("order").EnumerateArray().Select(e => e.GetString()).SequenceEqual(["Google AI Studio", "Vertex"]));
+    }
+
+    [TestMethod]
+    public async Task The_provider_that_served_a_reply_is_readable_from_the_response()
+    {
+        using var listener = new HttpListener();
+        var prefix = $"http://127.0.0.1:{FreePort()}/";
+        listener.Prefixes.Add(prefix);
+        listener.Start();
+        _ = Task.Run(async () =>
+        {
+            var context = await listener.GetContextAsync();
+            var reply = Encoding.UTF8.GetBytes("""{"id":"x","object":"chat.completion","created":0,"model":"m","provider":"Google AI Studio","choices":[{"index":0,"finish_reason":"stop","message":{"role":"assistant","content":"{\"recipes\":[]}"}}]}""");
+            context.Response.ContentType = "application/json";
+            await context.Response.OutputStream.WriteAsync(reply);
+            context.Response.Close();
+        });
+
+        using var client = LlmClientFactory.Create(new LlmOptions { ApiKey = "sk-test", Model = "m", BaseUrl = prefix });
+        var response = await client.GetResponseAsync<ExtractionReply>([new ChatMessage(ChatRole.User, "hi")], useJsonSchemaResponseFormat: true);
+
+        Assert.AreEqual("Google AI Studio", LlmClientFactory.ServingProvider(response));
+    }
+
+    [TestMethod]
+    public async Task The_cost_of_a_reply_is_readable_from_the_usage_block_of_the_response()
+    {
+        using var listener = new HttpListener();
+        var prefix = $"http://127.0.0.1:{FreePort()}/";
+        listener.Prefixes.Add(prefix);
+        listener.Start();
+        _ = Task.Run(async () =>
+        {
+            var context = await listener.GetContextAsync();
+            var reply = Encoding.UTF8.GetBytes("""{"id":"x","object":"chat.completion","created":0,"model":"m","provider":"Google AI Studio","choices":[{"index":0,"finish_reason":"stop","message":{"role":"assistant","content":"{\"recipes\":[]}"}}],"usage":{"prompt_tokens":120,"completion_tokens":7,"total_tokens":127,"cost":0.000123,"cost_details":{"upstream_inference_cost":null}}}""");
+            context.Response.ContentType = "application/json";
+            await context.Response.OutputStream.WriteAsync(reply);
+            context.Response.Close();
+        });
+
+        using var client = LlmClientFactory.Create(new LlmOptions { ApiKey = "sk-test", Model = "m", BaseUrl = prefix });
+        var response = await client.GetResponseAsync<ExtractionReply>([new ChatMessage(ChatRole.User, "hi")], useJsonSchemaResponseFormat: true);
+
+        Assert.AreEqual(0.000123m, LlmClientFactory.Cost(response));
+        Assert.AreEqual(120, response.Usage?.InputTokenCount);
+        Assert.AreEqual(7, response.Usage?.OutputTokenCount);
+    }
+
+    [TestMethod]
+    public void A_response_without_raw_data_has_no_known_cost() =>
+        Assert.IsNull(LlmClientFactory.Cost(new ChatResponse()));
+
+    [TestMethod]
+    public void A_response_without_raw_data_has_no_known_serving_provider() =>
+        Assert.IsNull(LlmClientFactory.ServingProvider(new ChatResponse()));
+
+    [TestMethod]
+    public async Task OpenRouter_requests_a_strict_json_schema_from_providers_that_honour_it()
+    {
+        using var request = await SendAsync(new LlmOptions { ApiKey = "sk-test", Model = "m" });
+
         var format = request.RootElement.GetProperty("response_format");
         Assert.AreEqual("json_schema", format.GetProperty("type").GetString());
         Assert.IsTrue(format.GetProperty("json_schema").GetProperty("strict").GetBoolean());
