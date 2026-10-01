@@ -54,7 +54,17 @@ public sealed class LlmClientFactoryTests
         Assert.AreEqual("json_schema", format.GetProperty("type").GetString());
         Assert.IsTrue(format.GetProperty("json_schema").GetProperty("strict").GetBoolean());
         Assert.IsTrue(request.RootElement.GetProperty("provider").GetProperty("require_parameters").GetBoolean());
-        AssertStrictObjects(format.GetProperty("json_schema").GetProperty("schema"));
+        var schema = format.GetProperty("json_schema").GetProperty("schema");
+        AssertStrictObjects(schema);
+
+        var recipe = schema.GetProperty("properties").GetProperty("recipes").GetProperty("items");
+        foreach (var name in new[] { "ingredientLines", "steps" })
+        {
+            var list = recipe.GetProperty("properties").GetProperty(name);
+            Assert.AreEqual(JsonValueKind.String, list.GetProperty("type").ValueKind, $"{name} must not be nullable");
+            // The chat library's strict transform turns minItems into a line of the description instead of a keyword.
+            StringAssert.Contains(list.GetProperty("description").GetString(), "minItems: 1", $"{name} needs at least one entry");
+        }
     }
 
     /// <summary>Strict mode needs every object closed (<c>additionalProperties: false</c>) with all its properties required.</summary>

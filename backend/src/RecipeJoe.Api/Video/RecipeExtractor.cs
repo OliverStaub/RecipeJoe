@@ -1,3 +1,5 @@
+using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 using System.Reflection;
 using System.Text.Json;
 using Microsoft.Extensions.AI;
@@ -15,8 +17,8 @@ internal sealed record ExtractedRecipe(
     int? PrepMinutes,
     int? CookMinutes,
     int? TotalMinutes,
-    IReadOnlyList<string>? IngredientLines,
-    IReadOnlyList<string>? Steps
+    [property: Description("One plain string per ingredient, e.g. \"250 g Spaghetti\". Never an object.")][property: MinLength(1)] IReadOnlyList<string> IngredientLines,
+    [property: Description("One plain string per preparation step, in order. Never an object.")][property: MinLength(1)] IReadOnlyList<string> Steps
 );
 
 /// <summary>Video text → one <see cref="ParsedRecipe"/> per dish, written by an LLM. Owns the prompt, the output schema, validation and the timeout; text in, text out, so <see cref="ParsedRecipe.ImageUrl"/> is always null. Provider details stay in the logs: callers only see the failure kind.</summary>
@@ -158,14 +160,16 @@ internal sealed partial class RecipeExtractor(IChatClient chat, IOptions<LlmOpti
     private static TimeSpan? Minutes(int? minutes) => minutes is > 0 ? TimeSpan.FromMinutes(minutes.Value) : null;
 
     private static string Describe(VideoText video) =>
-        $"""
-        Titel: {video.Title}
+        $$"""
+        Titel: {{video.Title}}
 
         Beschreibung:
-        {video.Description}
+        {{video.Description}}
 
         Transkript:
-        {video.Transcript}
+        {{video.Transcript}}
+
+        Basierend auf dem Text oben: Schreibe für jedes Gericht, dessen Zutaten und Zubereitung im Text stehen, ein Rezept. Gibt es keines, antworte mit {"recipes": []}. Antworte nur als JSON im beschriebenen Format.
         """;
 
     private static string LoadPrompt()
