@@ -280,6 +280,12 @@ it('words a Failed Video Import for the video, offering retry only when it can h
           url: 'https://youtu.be/def',
           failure: 'NoCaptions',
         },
+        {
+          ...videoImport,
+          id: '55555555-5555-5555-5555-555555555555',
+          url: 'https://youtu.be/lang',
+          failure: 'VideoTooLong',
+        },
       ]),
     ),
   );
@@ -299,6 +305,15 @@ it('words a Failed Video Import for the video, offering retry only when it can h
   expect(
     within(dismissOnly).queryByRole('button', { name: 'Erneut versuchen' }),
   ).not.toBeInTheDocument();
+
+  const tooLong = importRow('youtu.be/lang');
+  within(tooLong).getByText(
+    'Dieses Video ist zu lang, daraus kann kein Rezept gelesen werden.',
+  );
+  expect(
+    within(tooLong).queryByRole('button', { name: 'Erneut versuchen' }),
+  ).not.toBeInTheDocument();
+  within(tooLong).getByRole('button', { name: 'Verwerfen' });
 });
 
 it('retries a Failed Import, turning it back into a Pending row in place', async () => {

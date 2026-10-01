@@ -122,6 +122,39 @@ public sealed class RecipeExtractorTests
     }
 
     [TestMethod]
+    [DataRow("""{"error":{"code":400,"message":"request (8889 tokens) exceeds the available context size (4096 tokens), try increasing it","type":"exceed_context_size_error","n_prompt_tokens":8889,"n_ctx":4096}}""", DisplayName = "Ollama")]
+    [DataRow("""{"error":{"code":400,"message":"This endpoint's maximum context length is 262144 tokens. However, you requested about 300000 tokens."}}""", DisplayName = "OpenRouter")]
+    public async Task A_context_overflow_is_VideoTooLong(string providerError)
+    {
+        var client = FakeChatClient.Throwing(new HttpRequestException(providerError, null, HttpStatusCode.BadRequest));
+
+        var result = await CreateExtractor(client).ExtractAsync(Video, CancellationToken.None);
+
+        Assert.AreEqual(ImportFailure.VideoTooLong, result.Failure);
+    }
+
+    [TestMethod]
+    public async Task A_context_overflow_nested_in_another_exception_is_still_VideoTooLong()
+    {
+        var overflow = new HttpRequestException("exceed_context_size_error", null, HttpStatusCode.BadRequest);
+        var client = FakeChatClient.Throwing(new InvalidOperationException("chat failed", overflow));
+
+        var result = await CreateExtractor(client).ExtractAsync(Video, CancellationToken.None);
+
+        Assert.AreEqual(ImportFailure.VideoTooLong, result.Failure);
+    }
+
+    [TestMethod]
+    public async Task A_bad_request_that_is_not_an_overflow_stays_LlmUnavailable()
+    {
+        var client = FakeChatClient.Throwing(new HttpRequestException("model does not support json schema", null, HttpStatusCode.BadRequest));
+
+        var result = await CreateExtractor(client).ExtractAsync(Video, CancellationToken.None);
+
+        Assert.AreEqual(ImportFailure.LlmUnavailable, result.Failure);
+    }
+
+    [TestMethod]
     public async Task A_provider_slower_than_the_timeout_is_LlmUnavailable()
     {
         var result = await CreateExtractor(new SlowChatClient(), TimeSpan.FromMilliseconds(50)).ExtractAsync(Video, CancellationToken.None);

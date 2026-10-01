@@ -17,6 +17,7 @@ export const importFailures = [
   'NoCaptions',
   'LlmUnavailable',
   'LlmBadOutput',
+  'VideoTooLong',
   'SaveFailed',
 ] as const satisfies readonly ImportFailure[];
 
@@ -63,6 +64,8 @@ export function failureMessage(
         return 'Dieses Video ist nicht verfügbar (privat, gelöscht oder eingeschränkt).';
       case 'NoRecipe':
         return 'In diesem Video wurde kein Rezept gefunden.';
+      case 'VideoTooLong':
+        return 'Dieses Video ist zu lang, daraus kann kein Rezept gelesen werden.';
     }
   }
   switch (failure) {
@@ -86,6 +89,8 @@ export function failureMessage(
       return 'Der LLM-Provider ist nicht erreichbar.';
     case 'LlmBadOutput':
       return 'Die KI hat keine brauchbare Antwort geliefert. Versuch es nochmal.';
+    case 'VideoTooLong':
+      return 'Dieses Video ist zu lang.';
     case 'SaveFailed':
       return 'Das Rezept konnte nicht gespeichert werden. Versuch es nochmal.';
   }

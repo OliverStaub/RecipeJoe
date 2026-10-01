@@ -6,12 +6,17 @@
 
 **Blocked by:** 05, 08
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] `Llm:ContextTokens` (default 32768) sent as a constant `num_ctx` on every Ollama request (a change would reload the model)
-- [ ] `"truncate": false` injected into Ollama chat requests (OllamaSharp lacks the field; e.g. a delegating handler), so overflow is a 400 `exceed_context_size_error` instead of silent truncation
-- [ ] New failure kind `VideoTooLong`: Ollama context overflow and the OpenRouter context-length error map to it (OpenRouter `context-compression` stays off); not retryable (dismiss only)
-- [ ] Video message: "Dieses Video ist zu lang, daraus kann kein Rezept gelesen werden."
-- [ ] Extractor unit test: overflow reply → `VideoTooLong`; API test via the stub; route test: message + no retry button
-- [ ] Manually verified with a too-small `Llm:ContextTokens` against real Ollama → `VideoTooLong`; noted in Comments
-- [ ] Coverage gate passes
+- [x] `Llm:ContextTokens` (default 32768) sent as a constant `num_ctx` on every Ollama request (a change would reload the model)
+- [x] `"truncate": false` injected into Ollama chat requests (OllamaSharp lacks the field; e.g. a delegating handler), so overflow is a 400 `exceed_context_size_error` instead of silent truncation
+- [x] New failure kind `VideoTooLong`: Ollama context overflow and the OpenRouter context-length error map to it (OpenRouter `context-compression` stays off); not retryable (dismiss only)
+- [x] Video message: "Dieses Video ist zu lang, daraus kann kein Rezept gelesen werden."
+- [x] Extractor unit test: overflow reply → `VideoTooLong`; API test via the stub; route test: message + no retry button
+- [x] Manually verified with a too-small `Llm:ContextTokens` against real Ollama → `VideoTooLong`; noted in Comments
+- [x] Coverage gate passes
+
+## Comments
+
+- Manually verified 2026-10-01: real Ollama (`gemma4:26b`), `Llm:ContextTokens=512`, ~2.4k-token transcript through `LlmClientFactory` + `RecipeExtractor` → `VideoTooLong` (throwaway test, deleted).
+- OpenRouter `context-compression` not sent explicitly: it's off by default for gemma-4-26b (262K ctx; default-on only for ≤8K endpoints).

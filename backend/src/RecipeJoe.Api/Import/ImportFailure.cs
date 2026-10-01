@@ -20,6 +20,9 @@ internal enum ImportFailure
     /// <summary>The LLM answered, but nothing usable came out of it.</summary>
     LlmBadOutput,
 
+    /// <summary>The video's text doesn't fit the LLM's context window. Retrying can't help.</summary>
+    VideoTooLong,
+
     /// <summary>An Import produced Recipe Drafts but none of them could be saved.</summary>
     SaveFailed,
 }

@@ -32,8 +32,8 @@ public sealed class VideoImportTests
         ]}
         """;
 
-    /// <summary>OpenRouter answers any chat request mentioning <paramref name="videoTitle"/> with <paramref name="content"/> (an OpenAI chat completion wrapping it), or with <paramref name="status"/>.</summary>
-    private static void StubLlm(string videoTitle, string content, int status = 200)
+    /// <summary>OpenRouter answers any chat request mentioning <paramref name="videoTitle"/> with <paramref name="content"/> (an OpenAI chat completion wrapping it), or with <paramref name="status"/> and <paramref name="errorBody"/>.</summary>
+    private static void StubLlm(string videoTitle, string content, int status = 200, string errorBody = "{}")
     {
         var completion = JsonSerializer.Serialize(new
         {
@@ -46,7 +46,7 @@ public sealed class VideoImportTests
 
         _factory.LlmStub
             .Given(Request.Create().WithPath("/v1/chat/completions").UsingPost().WithBody(new WildcardMatcher($"*{videoTitle}*")))
-            .RespondWith(Response.Create().WithStatusCode(status).WithHeader("Content-Type", "application/json").WithBody(status == 200 ? completion : "{}"));
+            .RespondWith(Response.Create().WithStatusCode(status).WithHeader("Content-Type", "application/json").WithBody(status == 200 ? completion : errorBody));
     }
 
     private static async Task<Guid> StartAsync(HttpClient client, string videoId)
@@ -156,5 +156,19 @@ public sealed class VideoImportTests
         var client = _factory.CreateClient();
 
         Assert.AreEqual("LlmBadOutput", await WaitForOutcomeAsync(client, await StartAsync(client, "kein-rezept")));
+    }
+
+    [TestMethod]
+    public async Task A_video_too_long_for_the_provider_fails_with_VideoTooLong()
+    {
+        StubLlm(
+            "Mein Urlaub in Italien",
+            "",
+            status: 400,
+            errorBody: """{"error":{"code":400,"message":"This endpoint's maximum context length is 262144 tokens. However, you requested about 300000 tokens."}}"""
+        );
+        var client = _factory.CreateClient();
+
+        Assert.AreEqual("VideoTooLong", await WaitForOutcomeAsync(client, await StartAsync(client, "kein-rezept")));
     }
 }

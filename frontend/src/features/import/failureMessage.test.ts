@@ -50,6 +50,10 @@ const videoCases: [ImportFailure, string][] = [
     'LlmBadOutput',
     'Die KI hat keine brauchbare Antwort geliefert. Versuch es nochmal.',
   ],
+  [
+    'VideoTooLong',
+    'Dieses Video ist zu lang, daraus kann kein Rezept gelesen werden.',
+  ],
 ];
 
 it.each(videoCases)(
@@ -74,6 +78,7 @@ it.each<ImportFailure>([
   'InvalidUrl',
   'NotFound',
   'NoCaptions',
+  'VideoTooLong',
   'ForbiddenAddress',
   'NoRecipe',
 ])('offers only dismiss for %s', (kind) => {

@@ -1,3 +1,5 @@
+using System.Net;
+using System.Text.Json.Nodes;
 using Microsoft.Extensions.AI;
 using RecipeJoe.Api.Video;
 
@@ -28,5 +30,33 @@ public sealed class LlmClientFactoryTests
 
         Assert.AreEqual("tiny:1b", metadata?.DefaultModelId);
         Assert.AreEqual(new Uri("http://localhost:11434"), metadata?.ProviderUri);
+    }
+
+    [TestMethod]
+    public async Task Ollama_requests_carry_a_constant_num_ctx_and_refuse_to_truncate()
+    {
+        var handler = new CapturingHandler();
+        using var client = LlmClientFactory.Create(new LlmOptions { ContextTokens = 4096 }, handler);
+
+        await client.GetResponseAsync("hallo");
+
+        var body = JsonNode.Parse(handler.Body!)!;
+        Assert.AreEqual(4096, (int)body["options"]!["num_ctx"]!);
+        Assert.IsFalse((bool)body["truncate"]!);
+        Assert.IsFalse((bool)body["think"]!, "the existing options must survive");
+    }
+
+    private sealed class CapturingHandler : HttpMessageHandler
+    {
+        public string? Body { get; private set; }
+
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            Body = await request.Content!.ReadAsStringAsync(cancellationToken);
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("""{"model":"m","message":{"role":"assistant","content":"hi"},"done":true}""", System.Text.Encoding.UTF8, "application/x-ndjson"),
+            };
+        }
     }
 }

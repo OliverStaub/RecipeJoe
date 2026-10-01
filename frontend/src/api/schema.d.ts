@@ -125,6 +125,7 @@ export interface components {
       | 'NoCaptions'
       | 'LlmUnavailable'
       | 'LlmBadOutput'
+      | 'VideoTooLong'
       | 'SaveFailed'
       | null;
     /** @enum {unknown} */
