@@ -122,7 +122,6 @@ public sealed class RecipeExtractorTests
     }
 
     [TestMethod]
-    [DataRow("""{"error":{"code":400,"message":"request (8889 tokens) exceeds the available context size (4096 tokens), try increasing it","type":"exceed_context_size_error","n_prompt_tokens":8889,"n_ctx":4096}}""", DisplayName = "Ollama")]
     [DataRow("""{"error":{"code":400,"message":"This endpoint's maximum context length is 262144 tokens. However, you requested about 300000 tokens."}}""", DisplayName = "OpenRouter")]
     public async Task A_context_overflow_is_VideoTooLong(string providerError)
     {
@@ -136,7 +135,7 @@ public sealed class RecipeExtractorTests
     [TestMethod]
     public async Task A_context_overflow_nested_in_another_exception_is_still_VideoTooLong()
     {
-        var overflow = new HttpRequestException("exceed_context_size_error", null, HttpStatusCode.BadRequest);
+        var overflow = new HttpRequestException("maximum context length is 262144 tokens", null, HttpStatusCode.BadRequest);
         var client = FakeChatClient.Throwing(new InvalidOperationException("chat failed", overflow));
 
         var result = await CreateExtractor(client).ExtractAsync(Video, CancellationToken.None);

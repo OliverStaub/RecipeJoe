@@ -4,14 +4,13 @@ namespace RecipeJoe.Api.Video;
 
 internal enum LlmProvider
 {
-    Ollama,
     OpenRouter,
 }
 
 /// <summary>Bound from the "Llm" configuration section and validated on start.</summary>
 internal sealed class LlmOptions
 {
-    public LlmProvider Provider { get; set; } = LlmProvider.Ollama;
+    public LlmProvider Provider { get; set; } = LlmProvider.OpenRouter;
 
     /// <summary>Null picks the provider's default model.</summary>
     public string? Model { get; set; }
@@ -21,17 +20,22 @@ internal sealed class LlmOptions
 
     public string? ApiKey { get; set; }
 
-    /// <summary>Per request, covers a long generation by a local model.</summary>
+    /// <summary>Per request, covers a long generation.</summary>
     public TimeSpan Timeout { get; set; } = TimeSpan.FromMinutes(3);
 
-    /// <summary>Context window requested from Ollama, input plus output (32768 holds about an hour of speech). Constant: every change of it reloads the model.</summary>
-    public int ContextTokens { get; set; } = 32768;
-
     public string ResolvedModel =>
-        Model ?? (Provider == LlmProvider.OpenRouter ? "google/gemma-4-26b-a4b-it" : "gemma4:26b");
+        Model ?? Provider switch
+        {
+            LlmProvider.OpenRouter => "google/gemma-4-26b-a4b-it",
+            _ => throw new NotSupportedException($"LLM provider {Provider} has no default model."),
+        };
 
     public Uri ResolvedBaseUrl =>
-        new(BaseUrl ?? (Provider == LlmProvider.OpenRouter ? "https://openrouter.ai/api/v1" : "http://host.docker.internal:11434"));
+        new(BaseUrl ?? Provider switch
+        {
+            LlmProvider.OpenRouter => "https://openrouter.ai/api/v1",
+            _ => throw new NotSupportedException($"LLM provider {Provider} has no default endpoint."),
+        });
 }
 
 internal sealed class LlmOptionsValidator : IValidateOptions<LlmOptions>
@@ -42,7 +46,7 @@ internal sealed class LlmOptionsValidator : IValidateOptions<LlmOptions>
 
         if (!Enum.IsDefined(options.Provider))
         {
-            errors.Add("Llm:Provider must be Ollama or OpenRouter.");
+            errors.Add("Llm:Provider must be OpenRouter.");
         }
 
         if (options.Model is not null && string.IsNullOrWhiteSpace(options.Model))
@@ -63,11 +67,6 @@ internal sealed class LlmOptionsValidator : IValidateOptions<LlmOptions>
         if (options.Timeout <= TimeSpan.Zero)
         {
             errors.Add("Llm:Timeout must be positive.");
-        }
-
-        if (options.ContextTokens <= 0)
-        {
-            errors.Add("Llm:ContextTokens must be positive.");
         }
 
         return errors.Count == 0 ? ValidateOptionsResult.Success : ValidateOptionsResult.Fail(errors);

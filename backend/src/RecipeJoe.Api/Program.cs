@@ -12,6 +12,12 @@ var isBuildTimeOpenApiGeneration = Assembly.GetEntryAssembly()?.GetName().Name =
 
 var builder = WebApplication.CreateBuilder(args);
 
+if (isBuildTimeOpenApiGeneration)
+{
+    // The doc generator boots the app without the secret; it never calls the LLM.
+    builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?> { ["Llm:ApiKey"] = "build-time-placeholder" });
+}
+
 builder.Services.AddSingleton(TimeProvider.System);
 
 builder.Services.ConfigureHttpJsonOptions(options =>

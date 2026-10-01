@@ -8,15 +8,13 @@ public sealed class LlmOptionsValidatorTests
     private static bool IsValid(LlmOptions options) => new LlmOptionsValidator().Validate(null, options).Succeeded;
 
     [TestMethod]
-    public void Defaults_are_valid_Ollama_with_a_three_minute_timeout()
+    public void Defaults_are_OpenRouter_with_a_three_minute_timeout()
     {
-        var options = new LlmOptions();
+        var options = new LlmOptions { ApiKey = "sk-test" };
 
+        Assert.AreEqual(LlmProvider.OpenRouter, options.Provider);
         Assert.IsTrue(IsValid(options));
-        Assert.AreEqual("gemma4:26b", options.ResolvedModel);
-        Assert.AreEqual(new Uri("http://host.docker.internal:11434"), options.ResolvedBaseUrl);
         Assert.AreEqual(TimeSpan.FromMinutes(3), options.Timeout);
-        Assert.AreEqual(32768, options.ContextTokens);
     }
 
     [TestMethod]
@@ -35,10 +33,9 @@ public sealed class LlmOptionsValidatorTests
     [TestMethod]
     public void A_blank_model_a_relative_base_url_a_non_positive_timeout_or_context_and_an_unknown_provider_are_invalid()
     {
-        Assert.IsFalse(IsValid(new LlmOptions { Model = " " }));
-        Assert.IsFalse(IsValid(new LlmOptions { BaseUrl = "not a url" }));
-        Assert.IsFalse(IsValid(new LlmOptions { Timeout = TimeSpan.Zero }));
+        Assert.IsFalse(IsValid(new LlmOptions { ApiKey = "k", Model = " " }));
+        Assert.IsFalse(IsValid(new LlmOptions { ApiKey = "k", BaseUrl = "not a url" }));
+        Assert.IsFalse(IsValid(new LlmOptions { ApiKey = "k", Timeout = TimeSpan.Zero }));
         Assert.IsFalse(IsValid(new LlmOptions { Provider = (LlmProvider)99 }));
-        Assert.IsFalse(IsValid(new LlmOptions { ContextTokens = 0 }));
     }
 }

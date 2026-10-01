@@ -35,8 +35,6 @@ dev:
     web=$!
     trap 'kill $web 2>/dev/null || true; docker compose stop postgres' EXIT
     # The API runs in the foreground: background jobs ignore SIGINT, so only it gets Ctrl-C; the trap stops the rest.
-    # The API runs on the host here, where host.docker.internal doesn't resolve: local Ollama is on localhost.
-    if [ "${Llm__Provider:-Ollama}" = Ollama ]; then export Llm__BaseUrl="${Llm__BaseUrl:-http://localhost:11434}"; fi
     cd backend
     ConnectionStrings__Db="Host=localhost;Port=${POSTGRES_PORT:-5432};Database=$POSTGRES_DB;Username=$POSTGRES_USER;Password=$POSTGRES_PASSWORD" \
         dotnet watch --project src/RecipeJoe.Api
@@ -116,6 +114,12 @@ test-e2e *args:
     {{ e2e_compose }} down -v
     {{ e2e_compose }} up -d --build --wait
     cd e2e && BASE_URL="http://localhost:${E2E_WEB_PORT:-8090}" npx playwright test "$@"
+
+# Opt-in: run the extraction prompt against OpenRouter (same Llm__* config as the API) on recorded videos; never in CI. Missing recordings are fetched from YouTube.
+[group('tests')]
+[working-directory('backend')]
+golden *args:
+    dotnet test --project tests/RecipeJoe.GoldenTests --output Detailed "$@"
 
 # Remove the E2E stack and its database.
 [group('tests')]

@@ -90,13 +90,12 @@ internal sealed partial class RecipeExtractor(IChatClient chat, IOptions<LlmOpti
         return valid.Count == 0 ? Fail(ImportFailure.LlmBadOutput) : Result<IReadOnlyList<ParsedRecipe>, ImportFailure>.Ok(valid);
     }
 
-    /// <summary>Ollama (with <c>truncate:false</c>) answers <c>exceed_context_size_error</c>; OpenRouter words it as "maximum context length". Matched loosely: OpenRouter's overflow reply is documented, not reproduced.</summary>
+    /// <summary>OpenRouter words a context overflow as "maximum context length". Matched loosely: the overflow reply is documented, not reproduced.</summary>
     private static bool IsContextOverflow(Exception exception)
     {
         for (var e = exception; e is not null; e = e.InnerException)
         {
-            if (e.Message.Contains("exceed_context_size_error", StringComparison.OrdinalIgnoreCase)
-                || e.Message.Contains("context length", StringComparison.OrdinalIgnoreCase)
+            if (e.Message.Contains("context length", StringComparison.OrdinalIgnoreCase)
                 || e.Message.Contains("context_length_exceeded", StringComparison.OrdinalIgnoreCase))
             {
                 return true;

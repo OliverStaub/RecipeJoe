@@ -9,7 +9,6 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
     <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" />
-    <PackageReference Include="OllamaSharp" />
     <PackageReference Include="YoutubeExplode" />
   </ItemGroup>
 
@@ -27,6 +26,7 @@
     <InternalsVisibleTo Include="RecipeJoe.UnitTests" />
     <InternalsVisibleTo Include="RecipeJoe.ContractTests" />
     <InternalsVisibleTo Include="RecipeJoe.IntegrationTests" />
+    <InternalsVisibleTo Include="RecipeJoe.GoldenTests" />
   </ItemGroup>
 
 </Project>
