@@ -20,7 +20,8 @@ internal sealed record CaseOutcome(
     long InputTokens,
     long OutputTokens,
     decimal CostUsd,
-    string? Provider
+    string? Provider,
+    double? Seconds = null
 );
 
 /// <summary>All golden cases once. Stage 1 is the cheap first pass, stage 2 the repeats on the survivors.</summary>
@@ -28,6 +29,10 @@ internal sealed record RunOutcome(int Stage, string? PinnedProvider, IReadOnlyLi
 {
     [JsonIgnore]
     public decimal CostUsd => Cases.Sum(c => c.CostUsd);
+
+    /// <summary>Wall-clock time of the whole pass; null when any case has no timing (older result files).</summary>
+    [JsonIgnore]
+    public double? Seconds => Cases.All(c => c.Seconds is not null) ? Cases.Sum(c => c.Seconds!.Value) : null;
 
     [JsonIgnore]
     public bool AllPassed => Cases.All(c => c.Passed);
@@ -134,10 +139,12 @@ internal sealed class ModelRunner(Func<LlmOptions, IChatClient> createClient, Fu
         using var chat = new MeteringChatClient(createClient(options), delay);
         var extractor = new RecipeExtractor(chat, Options.Create(options), NullLogger<RecipeExtractor>.Instance);
 
+        var clock = System.Diagnostics.Stopwatch.StartNew();
         var result = await extractor.ExtractAsync(video, cancellationToken);
+        clock.Stop();
 
         var (passed, failure, found) = Score(golden, result);
-        return new CaseOutcome(golden.VideoId, golden.ExpectedRecipes, passed, failure, found, chat.InputTokens, chat.OutputTokens, chat.CostUsd, chat.Provider);
+        return new CaseOutcome(golden.VideoId, golden.ExpectedRecipes, passed, failure, found, chat.InputTokens, chat.OutputTokens, chat.CostUsd, chat.Provider, clock.Elapsed.TotalSeconds);
     }
 
     /// <summary>Same bar as `just golden`: the expected number of Recipes, or NoRecipe when none are expected.</summary>

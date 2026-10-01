@@ -4,8 +4,20 @@ using System.Text;
 namespace RecipeJoe.Sweep;
 
 /// <summary>One row of the report: what a model scored and cost over all its saved runs.</summary>
-internal sealed record ModelScore(string Model, int Runs, int Passed, int Total, decimal TotalCostUsd, IReadOnlyDictionary<string, int> Failures, IReadOnlyList<string> Providers)
+internal sealed record ModelScore(string Model, int Runs, int Passed, int Total, decimal TotalCostUsd, IReadOnlyDictionary<string, int> Failures, IReadOnlyList<string> Providers, IReadOnlyList<double> RunSeconds)
 {
+    /// <summary>Median seconds of one golden pass; null when no run has timings. Includes any 402 backoff and, under concurrency, some queueing.</summary>
+    public double? MedianSeconds => RunSeconds.Count == 0 ? null : Median(RunSeconds);
+
+    public double? WorstSeconds => RunSeconds.Count == 0 ? null : RunSeconds.Max();
+
+    private static double Median(IReadOnlyList<double> values)
+    {
+        var sorted = values.Order().ToList();
+        var mid = sorted.Count / 2;
+        return sorted.Count % 2 == 1 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+    }
+
     public double PassRate => Total == 0 ? 0 : (double)Passed / Total;
 
     public decimal CostPerRun => Runs == 0 ? 0 : TotalCostUsd / Runs;
@@ -27,7 +39,8 @@ internal static class SweepReport
             cases.Count,
             result.CostUsd,
             cases.Where(c => c.Failure is not null).GroupBy(c => c.Failure!).OrderBy(g => g.Key, StringComparer.Ordinal).ToDictionary(g => g.Key, g => g.Count()),
-            [.. cases.Select(c => c.Provider).Where(p => !string.IsNullOrEmpty(p)).Distinct().Order(StringComparer.Ordinal)!]
+            [.. cases.Select(c => c.Provider).Where(p => !string.IsNullOrEmpty(p)).Distinct().Order(StringComparer.Ordinal)!],
+            [.. result.Runs.Select(r => r.Seconds).OfType<double>()]
         );
     }
 
@@ -89,17 +102,20 @@ internal static class SweepReport
         text.AppendLine();
         text.AppendLine("## All models");
         text.AppendLine();
-        text.AppendLine("Pass rate counts golden cases over all runs. Cost per pass is the money spent per passed case.");
+        text.AppendLine("Pass rate counts golden cases over all runs. Cost per pass is the money spent per passed case. Time is wall-clock per golden pass (all cases); it includes retry backoff and, with concurrency above 1, some queueing, so use it to compare models, not as exact latency.");
         text.AppendLine();
-        text.AppendLine("| Model | Runs | Pass rate | $ per golden pass | $ per pass | Failure kinds | Serving provider |");
-        text.AppendLine("|---|---:|---:|---:|---:|---|---|");
+        text.AppendLine("| Model | Runs | Pass rate | $ per golden pass | $ per pass | Time per golden pass (median / worst) | Failure kinds | Serving provider |");
+        text.AppendLine("|---|---:|---:|---:|---:|---:|---|---|");
         foreach (var m in scores)
         {
-            text.AppendLine(CultureInfo.InvariantCulture, $"| `{m.Model}` | {m.Runs} | {m.PassRate:P0} ({m.Passed}/{m.Total}) | {Usd(m.CostPerRun)} | {(m.CostPerPass is { } c ? Usd(c) : "-")} | {(m.Failures.Count == 0 ? "-" : string.Join(", ", m.Failures.Select(f => $"{f.Key}×{f.Value}")))} | {(m.Providers.Count == 0 ? "unknown" : string.Join(", ", m.Providers))} |");
+            text.AppendLine(CultureInfo.InvariantCulture, $"| `{m.Model}` | {m.Runs} | {m.PassRate:P0} ({m.Passed}/{m.Total}) | {Usd(m.CostPerRun)} | {(m.CostPerPass is { } c ? Usd(c) : "-")} | {Time(m)} | {(m.Failures.Count == 0 ? "-" : string.Join(", ", m.Failures.Select(f => $"{f.Key}×{f.Value}")))} | {(m.Providers.Count == 0 ? "unknown" : string.Join(", ", m.Providers))} |");
         }
 
         return text.ToString();
     }
+
+    private static string Time(ModelScore m) =>
+        m.MedianSeconds is { } median ? string.Create(CultureInfo.InvariantCulture, $"{median:0.#} s / {m.WorstSeconds:0.#} s") : "-";
 
     private static string Usd(decimal value) => value.ToString("$0.0000", CultureInfo.InvariantCulture);
 }

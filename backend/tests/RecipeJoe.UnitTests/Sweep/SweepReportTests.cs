@@ -74,8 +74,8 @@ public sealed class SweepReportTests
 
         StringAssert.Contains(markdown, "4 models, total actual spend **$0.1700**");
         StringAssert.Contains(markdown, "`mid`: the cheapest frontier model with a pass rate of at least 90 %");
-        StringAssert.Contains(markdown, "| `cheap` | 1 | 50 % (1/2) | $0.0100 | $0.0100 | LlmBadOutput×1 | P1 |");
-        StringAssert.Contains(markdown, "| `weak` | 1 | 0 % (0/2) | $0.0200 | - | LlmUnavailable×2 | P1 |");
+        StringAssert.Contains(markdown, "| `cheap` | 1 | 50 % (1/2) | $0.0100 | $0.0100 | - | LlmBadOutput×1 | P1 |");
+        StringAssert.Contains(markdown, "| `weak` | 1 | 0 % (0/2) | $0.0200 | - | - | LlmUnavailable×2 | P1 |");
         StringAssert.Contains(markdown, "## Pareto frontier");
     }
 
@@ -87,6 +87,28 @@ public sealed class SweepReportTests
         StringAssert.Contains(markdown, "**Unconfirmed:**");
         var twice = new ModelResult("m", [.. Model("m", (true, 0.01m, null)).Runs, .. Model("m", (true, 0.01m, null)).Runs]);
         Assert.DoesNotContain("**Unconfirmed:**", SweepReport.Markdown([twice], null));
+    }
+
+    [TestMethod]
+    public void Time_per_golden_pass_is_shown_as_median_and_worst_over_the_runs()
+    {
+        RunOutcome Run(double seconds) => new(1, null, [new CaseOutcome("v", 1, true, null, 1, 1, 1, 0.01m, "P", seconds / 2), new CaseOutcome("w", 1, true, null, 1, 1, 1, 0.01m, "P", seconds / 2)]);
+        var result = new ModelResult("timed", [Run(10), Run(30), Run(20)]);
+
+        var score = SweepReport.Score(result);
+
+        Assert.AreEqual(20d, score.MedianSeconds);
+        Assert.AreEqual(30d, score.WorstSeconds);
+        StringAssert.Contains(SweepReport.Markdown([result], null), "| 20 s / 30 s |");
+    }
+
+    [TestMethod]
+    public void Results_without_timings_show_no_time_and_do_not_fail()
+    {
+        var score = SweepReport.Score(Model("old", (true, 0.01m, null)));
+
+        Assert.IsNull(score.MedianSeconds);
+        Assert.IsNull(score.WorstSeconds);
     }
 
     [TestMethod]

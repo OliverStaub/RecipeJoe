@@ -28,6 +28,10 @@ Options go after the command, e.g. `just sweep --cap 2 --max-models 20 --max-out
 
 Results are saved per model as they finish. Rerun `just sweep` after an interruption and finished models and runs are skipped, so nothing is paid twice. Delete `sweep-output/results/` to start over.
 
+## Speed
+
+The report shows wall-clock time per golden pass (median and worst over the runs). It includes retry backoff and, with `--concurrency` above 1, some queueing, so it ranks models but isn't exact latency; use `--concurrency 1` for cleaner numbers. Speed is information only: the Pareto frontier and recommendation stay on score vs cost. Results saved before timings existed show `-`.
+
 ## What it costs
 
 The spend cap stops new runs once reached and the report says so. Runs already in flight finish, so the total can overshoot slightly. `--dry-run` shows an estimate from list prices; the report shows the real cost (`usage.cost` of each reply). Roughly: a first pass over all ~250 candidates is $10-$75 without a price cap, a few dollars with `--max-output-price 1`.

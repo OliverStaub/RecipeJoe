@@ -58,6 +58,8 @@ public sealed class ModelRunnerTests
         Assert.AreEqual(0.005m, run.CostUsd);
         Assert.IsTrue(run.Cases.All(c => c.Provider == "StubProvider" && c.Failure is null));
         Assert.IsTrue(run.Cases.Select(c => c.RecipesFound).SequenceEqual([1, 5, null]));
+        Assert.IsTrue(run.Cases.All(c => c.Seconds is >= 0));
+        Assert.IsNotNull(run.Seconds);
     }
 
     [TestMethod]
