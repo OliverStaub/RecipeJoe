@@ -6,7 +6,7 @@
 
 **Blocked by:** 02, 04
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [ ] `ImportFailure` gains `NoCaptions`, `LlmUnavailable`, `LlmBadOutput`
 - [ ] Extractor mapping: network/timeout/5xx/429/401/unknown model → `LlmUnavailable` (details only in logs); malformed JSON, schema violation or all entries invalid → `LlmBadOutput`; empty list → `NoRecipe`

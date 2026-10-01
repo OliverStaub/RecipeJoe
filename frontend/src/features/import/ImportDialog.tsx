@@ -62,7 +62,7 @@ export function ImportDialog() {
             <Alert variant="destructive">
               <AlertTitle>Import fehlgeschlagen</AlertTitle>
               <AlertDescription>
-                {failureMessage(toImportFailure(error))}
+                {failureMessage(toImportFailure(error), 'Web')}
               </AlertDescription>
             </Alert>
           )}

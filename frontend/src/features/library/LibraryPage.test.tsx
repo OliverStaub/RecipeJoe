@@ -262,6 +262,45 @@ it('shows a Failed Import with its message, offering retry only when it can help
   within(dismissOnly).getByRole('button', { name: 'Verwerfen' });
 });
 
+it('words a Failed Video Import for the video, offering retry only when it can help', async () => {
+  const videoImport = {
+    ...failedImport,
+    kind: 'Video',
+    url: 'https://www.youtube.com/shorts/abc',
+    failure: 'LlmBadOutput',
+  } as const;
+  server.use(
+    http.get('/api/recipes', ({ response }) => response(200).json([])),
+    http.get('/api/imports', ({ response }) =>
+      response(200).json([
+        videoImport,
+        {
+          ...videoImport,
+          id: '44444444-4444-4444-4444-444444444444',
+          url: 'https://youtu.be/def',
+          failure: 'NoCaptions',
+        },
+      ]),
+    ),
+  );
+  renderApp();
+  await screen.findByText('youtube.com/shorts/abc');
+
+  const retryable = importRow('youtube.com/shorts/abc');
+  within(retryable).getByText(
+    'Die KI hat keine brauchbare Antwort geliefert. Versuch es nochmal.',
+  );
+  within(retryable).getByRole('button', { name: 'Erneut versuchen' });
+
+  const dismissOnly = importRow('youtu.be/def');
+  within(dismissOnly).getByText(
+    'Dieses Video hat keine Untertitel, daraus kann kein Rezept gelesen werden.',
+  );
+  expect(
+    within(dismissOnly).queryByRole('button', { name: 'Erneut versuchen' }),
+  ).not.toBeInTheDocument();
+});
+
 it('retries a Failed Import, turning it back into a Pending row in place', async () => {
   let current: Import = failedImport;
   server.use(

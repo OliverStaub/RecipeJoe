@@ -122,6 +122,8 @@ public sealed class VideoImportTests
     [TestMethod]
     [DataRow("ohne-untertitel", "NoCaptions")]
     [DataRow("gibt-es-nicht", "NotFound")]
+    [DataRow("nicht-erreichbar", "Unreachable")]
+    [DataRow("blockiert", "Blocked")]
     public async Task A_video_source_failure_ends_the_import_as_Failed_with_the_kind(string videoId, string expectedKind)
     {
         var client = _factory.CreateClient();

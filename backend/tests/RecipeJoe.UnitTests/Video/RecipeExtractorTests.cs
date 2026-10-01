@@ -107,9 +107,14 @@ public sealed class RecipeExtractorTests
     }
 
     [TestMethod]
-    public async Task A_provider_error_is_LlmUnavailable()
+    [DataRow(HttpStatusCode.ServiceUnavailable)]
+    [DataRow(HttpStatusCode.TooManyRequests)]
+    [DataRow(HttpStatusCode.Unauthorized)]
+    [DataRow(HttpStatusCode.NotFound, DisplayName = "Unknown model")]
+    [DataRow(null, DisplayName = "Network error")]
+    public async Task A_provider_error_is_LlmUnavailable(HttpStatusCode? status)
     {
-        var client = FakeChatClient.Throwing(new HttpRequestException("boom", null, HttpStatusCode.ServiceUnavailable));
+        var client = FakeChatClient.Throwing(new HttpRequestException("boom", null, status));
 
         var result = await CreateExtractor(client).ExtractAsync(Video, CancellationToken.None);
 

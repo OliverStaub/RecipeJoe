@@ -37,7 +37,7 @@ export function ImportRow({ importDto }: { importDto: Import }) {
             </span>
           ) : (
             <span className="block text-sm text-destructive">
-              {failureMessage(importDto.failure!)}
+              {failureMessage(importDto.failure!, importDto.kind)}
             </span>
           )}
         </span>

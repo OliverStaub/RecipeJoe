@@ -1,6 +1,7 @@
 import { HttpError } from '@/api/client';
 import {
   failureMessage,
+  isRetryable,
   toImportFailure,
   type ImportFailure,
 } from './failureMessage';
@@ -25,8 +26,58 @@ const cases: [ImportFailure, string][] = [
   ],
 ];
 
-it.each(cases)('maps %s to its German message', (kind, message) => {
-  expect(failureMessage(kind)).toBe(message);
+it.each(cases)('maps a Web %s to its German message', (kind, message) => {
+  expect(failureMessage(kind, 'Web')).toBe(message);
+});
+
+const videoCases: [ImportFailure, string][] = [
+  ['Unreachable', 'YouTube ist nicht erreichbar. Versuch es später nochmal.'],
+  [
+    'Blocked',
+    'YouTube blockiert gerade den Zugriff. Versuch es später nochmal.',
+  ],
+  [
+    'NotFound',
+    'Dieses Video ist nicht verfügbar (privat, gelöscht oder eingeschränkt).',
+  ],
+  [
+    'NoCaptions',
+    'Dieses Video hat keine Untertitel, daraus kann kein Rezept gelesen werden.',
+  ],
+  ['NoRecipe', 'In diesem Video wurde kein Rezept gefunden.'],
+  ['LlmUnavailable', 'Der LLM-Provider ist nicht erreichbar.'],
+  [
+    'LlmBadOutput',
+    'Die KI hat keine brauchbare Antwort geliefert. Versuch es nochmal.',
+  ],
+];
+
+it.each(videoCases)(
+  'maps a Video %s to its German message',
+  (kind, message) => {
+    expect(failureMessage(kind, 'Video')).toBe(message);
+  },
+);
+
+it.each<ImportFailure>([
+  'Unreachable',
+  'Blocked',
+  'BadResponse',
+  'LlmUnavailable',
+  'LlmBadOutput',
+  'SaveFailed',
+])('offers a retry for %s', (kind) => {
+  expect(isRetryable(kind)).toBe(true);
+});
+
+it.each<ImportFailure>([
+  'InvalidUrl',
+  'NotFound',
+  'NoCaptions',
+  'ForbiddenAddress',
+  'NoRecipe',
+])('offers only dismiss for %s', (kind) => {
+  expect(isRetryable(kind)).toBe(false);
 });
 
 it('passes a known kind through', () => {

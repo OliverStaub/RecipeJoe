@@ -4,6 +4,7 @@ import type { components } from '@/api/schema';
 // The generated schema's enum is `| null` only because the field that carries it (ImportDto.failure)
 // is nullable; the kind itself is never null.
 export type ImportFailure = NonNullable<components['schemas']['ImportFailure']>;
+export type ImportKind = components['schemas']['ImportKind'];
 
 export const importFailures = [
   'InvalidUrl',
@@ -37,6 +38,8 @@ const retryableKinds = [
   'Unreachable',
   'Blocked',
   'BadResponse',
+  'LlmUnavailable',
+  'LlmBadOutput',
   'SaveFailed',
 ] as const satisfies readonly ImportFailure[];
 
@@ -45,8 +48,24 @@ export function isRetryable(kind: ImportFailure): boolean {
   return (retryableKinds as readonly string[]).includes(kind);
 }
 
-export function failureMessage(kind: ImportFailure): string {
-  switch (kind) {
+/** The Import kind picks the wording (a page vs. a video). */
+export function failureMessage(
+  failure: ImportFailure,
+  importKind: ImportKind,
+): string {
+  if (importKind === 'Video') {
+    switch (failure) {
+      case 'Unreachable':
+        return 'YouTube ist nicht erreichbar. Versuch es später nochmal.';
+      case 'Blocked':
+        return 'YouTube blockiert gerade den Zugriff. Versuch es später nochmal.';
+      case 'NotFound':
+        return 'Dieses Video ist nicht verfügbar (privat, gelöscht oder eingeschränkt).';
+      case 'NoRecipe':
+        return 'In diesem Video wurde kein Rezept gefunden.';
+    }
+  }
+  switch (failure) {
     case 'InvalidUrl':
       return 'Das ist keine gültige Webadresse.';
     case 'Unreachable':

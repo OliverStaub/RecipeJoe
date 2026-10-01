@@ -22,10 +22,7 @@ test('the "Neu" badge clears after the Recipe is opened and the cook goes back',
   request,
 }) => {
   const token = randomUUID();
-  const response = await request.post('/api/recipes/import', {
-    data: { url: `http://fixtures/e2e/recipe.html?t=${token}` },
-  });
-  expect(response.status()).toBe(201);
+  await importViaApi(request, `http://fixtures/e2e/recipe.html?t=${token}`);
   const title = `Testrezept ${token}`;
   await page.goto('/');
   const row = page.getByRole('listitem').filter({ hasText: title });
