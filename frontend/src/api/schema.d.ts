@@ -122,6 +122,9 @@ export interface components {
       | 'BadResponse'
       | 'ForbiddenAddress'
       | 'NoRecipe'
+      | 'NoCaptions'
+      | 'LlmUnavailable'
+      | 'LlmBadOutput'
       | 'SaveFailed'
       | null;
     /** @enum {unknown} */

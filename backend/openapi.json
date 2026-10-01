@@ -329,6 +329,9 @@
           "BadResponse",
           "ForbiddenAddress",
           "NoRecipe",
+          "NoCaptions",
+          "LlmUnavailable",
+          "LlmBadOutput",
           "SaveFailed",
           null
         ]

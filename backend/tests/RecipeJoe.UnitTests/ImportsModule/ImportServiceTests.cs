@@ -43,11 +43,16 @@ public sealed class ImportServiceTests
     }
 
     [TestMethod]
-    public void Start_marks_every_import_as_Web_for_now()
+    [DataRow("http://site.test/rezept", "Web")]
+    [DataRow("https://www.youtube.com/playlist?list=PL1", "Web")]
+    [DataRow("https://www.youtube.com/watch?v=i84Sc5uvQa8", "Video")]
+    [DataRow("https://youtu.be/i84Sc5uvQa8", "Video")]
+    [DataRow("https://www.youtube.com/shorts/i84Sc5uvQa8", "Video")]
+    public void Start_picks_the_Video_kind_for_YouTube_video_urls_and_Web_for_the_rest(string url, string expected)
     {
         var (service, _) = CreateService();
 
-        Assert.AreEqual(ImportKind.Web, service.Start("http://site.test/rezept").Value.Kind);
+        Assert.AreEqual(expected, service.Start(url).Value.Kind.ToString());
     }
 
     [TestMethod]
