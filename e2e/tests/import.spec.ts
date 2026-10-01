@@ -5,6 +5,11 @@ import { expect, test } from '@playwright/test';
 const fixtureUrl = (page: string, token: string) =>
   `http://fixtures/e2e/${page}?t=${token}`;
 
+// Served by WireMock with a fixed delay, so the Import stays Pending long enough to be observed
+// (the static fixtures answer instantly and a slow browser can miss the Pending row).
+const slowRecipeUrl = (token: string) =>
+  `http://llm:8080/e2e/slow-recipe.html?t=${token}`;
+
 // The three browser projects run this file concurrently against one shared backend, so two
 // Imports of the same fixture page render as identical-looking rows (same URL label, no token).
 // The row's `title` attribute carries the full URL, letting a test find its own row regardless.
@@ -15,7 +20,7 @@ test('a Web Import shows as a Pending row, then its Recipe appears in the Librar
   page,
 }) => {
   const token = randomUUID();
-  const url = fixtureUrl('recipe.html', token);
+  const url = slowRecipeUrl(token);
   await page.goto('/');
 
   await page.getByRole('button', { name: 'Importieren' }).click();

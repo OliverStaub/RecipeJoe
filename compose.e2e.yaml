@@ -19,6 +19,8 @@ services:
     environment:
       # Reachable as http://fixtures (port 80 inside the compose network); exempt from the SSRF guard.
       Import__AllowedHosts__0: fixtures
+      # The slow-recipe page lives on WireMock (llm): its fixed delay keeps an Import Pending long enough to observe.
+      Import__AllowedHosts__1: llm
       # No YouTube, no paid calls: recorded videos in, WireMock as the LLM.
       VideoSource__Provider: Fake
       VideoSource__FakeDirectory: /fixtures/videos
