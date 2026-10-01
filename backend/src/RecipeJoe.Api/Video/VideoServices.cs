@@ -13,23 +13,17 @@ internal static class VideoServices
         services.AddOptions<LlmOptions>().BindConfiguration("Llm").ValidateOnStart();
         services.AddSingleton<IValidateOptions<LlmOptions>, LlmOptionsValidator>();
 
+        services.AddHttpClient<YoutubeExplodeVideoSource>();
         services.AddScoped<IVideoSource>(sp =>
             sp.GetRequiredService<IOptions<VideoSourceOptions>>().Value.Provider switch
             {
                 VideoSourceProvider.Fake => ActivatorUtilities.CreateInstance<FakeVideoSource>(sp),
-                // The YoutubeExplode adapter arrives with ticket 07; until then a real video can't be read.
-                _ => new UnavailableVideoSource(),
+                _ => sp.GetRequiredService<YoutubeExplodeVideoSource>(),
             }
         );
         services.AddSingleton<IChatClient>(sp => LlmClientFactory.Create(sp.GetRequiredService<IOptions<LlmOptions>>().Value));
         services.AddScoped<RecipeExtractor>();
         services.AddKeyedScoped<IImportPath, VideoImportPath>(ImportKind.Video);
         return services;
-    }
-
-    private sealed class UnavailableVideoSource : IVideoSource
-    {
-        public Task<Result<VideoContent, ImportFailure>> LoadAsync(Uri url, CancellationToken cancellationToken) =>
-            Task.FromResult(Result<VideoContent, ImportFailure>.Fail(ImportFailure.Unreachable));
     }
 }

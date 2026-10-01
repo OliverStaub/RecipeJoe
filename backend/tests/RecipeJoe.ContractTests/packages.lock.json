@@ -357,7 +357,8 @@
           "Microsoft.Extensions.AI": "[10.10.0, )",
           "Microsoft.Extensions.AI.OpenAI": "[10.10.1, )",
           "Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore": "[10.0.12, )",
-          "Npgsql.EntityFrameworkCore.PostgreSQL": "[10.0.3, )"
+          "Npgsql.EntityFrameworkCore.PostgreSQL": "[10.0.3, )",
+          "YoutubeExplode": "[6.6.2, )"
         }
       },
       "AngleSharp": {
@@ -419,6 +420,12 @@
           "Microsoft.EntityFrameworkCore.Relational": "[10.0.4, 11.0.0)",
           "Npgsql": "10.0.3"
         }
+      },
+      "YoutubeExplode": {
+        "type": "CentralTransitive",
+        "requested": "[6.6.2, )",
+        "resolved": "6.6.2",
+        "contentHash": "BN12ipOeTX1157Jx2uvFZGhR6dyHnji+8oM37NqXyu7nCL0rrSrxruea8lTSlUGewoxyvdC1owzRLThBI5Wj9Q=="
       }
     }
   }
