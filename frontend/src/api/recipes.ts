@@ -32,10 +32,17 @@ export function useRecipes(q: string) {
   return useQuery({ ...libraryQuery(q), placeholderData: keepPreviousData });
 }
 
-/** One Recipe for the Cook View; a non-integer id is not found without a request. */
+/** One Recipe for the Cook View; a non-integer id is not found without a request. Loading it also clears "Neu" in the Library, since the API marks the Recipe seen as a side effect. */
 export function useRecipe(id: number): RecipeState {
   const valid = Number.isInteger(id);
   const query = useQuery({ ...recipeByIdQuery(id), enabled: valid });
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (query.isSuccess) {
+      void queryClient.invalidateQueries({ queryKey: allLibraryQueries });
+    }
+  }, [id, query.isSuccess, queryClient]);
 
   if (!valid) return { status: 'notFound' };
   if (query.isPending) return { status: 'loading' };

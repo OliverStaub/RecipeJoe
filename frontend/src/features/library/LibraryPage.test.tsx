@@ -38,6 +38,7 @@ const summary = {
   title: 'Kartoffelsuppe',
   sourceUrl: 'http://fixtures.test/e2e/recipe.html',
   hasImage: false,
+  isNew: false,
 };
 
 const searchBox = () =>
@@ -68,6 +69,23 @@ it('shows the thumbnail when the Recipe has an image and a placeholder otherwise
   const image = await screen.findByRole('img', { name: 'Kartoffelsuppe' });
   expect(image).toHaveAttribute('src', '/api/recipes/7/image');
   expect(screen.getAllByRole('img')).toHaveLength(1);
+});
+
+it('shows a "Neu" badge for a Recipe that has not been opened yet', async () => {
+  server.use(
+    http.get('/api/recipes', ({ response }) =>
+      response(200).json([
+        { ...summary, isNew: true },
+        { ...summary, id: 8, title: 'Schon gesehen', isNew: false },
+      ]),
+    ),
+  );
+  renderApp();
+
+  const link = await screen.findByRole('link', { name: /Kartoffelsuppe/ });
+  expect(within(link).getByText('Neu')).toBeInTheDocument();
+  const seenLink = screen.getByRole('link', { name: /Schon gesehen/ });
+  expect(within(seenLink).queryByText('Neu')).not.toBeInTheDocument();
 });
 
 it('invites to import when the Library is empty', async () => {

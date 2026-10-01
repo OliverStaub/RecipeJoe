@@ -459,7 +459,8 @@
           "id",
           "title",
           "sourceUrl",
-          "hasImage"
+          "hasImage",
+          "isNew"
         ],
         "type": "object",
         "properties": {
@@ -474,6 +475,9 @@
             "type": "string"
           },
           "hasImage": {
+            "type": "boolean"
+          },
+          "isNew": {
             "type": "boolean"
           }
         }

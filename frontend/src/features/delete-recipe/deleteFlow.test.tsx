@@ -9,6 +9,7 @@ const summary = {
   title: 'Kartoffelsuppe',
   sourceUrl: 'http://fixtures.test/e2e/recipe.html',
   hasImage: false,
+  isNew: false,
 };
 
 function serveLibrary(recipes = [summary]) {

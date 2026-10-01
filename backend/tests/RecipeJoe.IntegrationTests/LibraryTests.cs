@@ -1,6 +1,8 @@
 using System.Net.Http.Json;
 using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using RecipeJoe.Api;
 using RecipeJoe.Api.Recipes;
 
 namespace RecipeJoe.IntegrationTests;
@@ -70,6 +72,77 @@ public sealed class LibraryTests
         Assert.IsGreaterThan(0, first.GetProperty("id").GetInt32());
         Assert.AreEqual("http://fixtures.test/recipes/x.html", first.GetProperty("sourceUrl").GetString());
         Assert.IsFalse(first.GetProperty("hasImage").GetBoolean());
+    }
+
+    [TestMethod]
+    public async Task A_freshly_saved_Recipe_is_new()
+    {
+        await SeedSoupsAsync();
+
+        var list = await _factory.CreateClient().GetFromJsonAsync<JsonElement>("/api/recipes");
+
+        Assert.IsTrue(list.EnumerateArray().All(r => r.GetProperty("isNew").GetBoolean()));
+    }
+
+    [TestMethod]
+    public async Task A_Recipe_stops_being_new_once_it_is_fetched_by_id()
+    {
+        await SeedSoupsAsync();
+        var client = _factory.CreateClient();
+        var list = await client.GetFromJsonAsync<JsonElement>("/api/recipes");
+        var id = list[0].GetProperty("id").GetInt32();
+
+        await client.GetAsync($"/api/recipes/{id}");
+
+        var after = await client.GetFromJsonAsync<JsonElement>("/api/recipes");
+        var summary = after.EnumerateArray().Single(r => r.GetProperty("id").GetInt32() == id);
+        Assert.IsFalse(summary.GetProperty("isNew").GetBoolean());
+    }
+
+    [TestMethod]
+    public async Task A_second_fetch_leaves_an_already_seen_Recipes_SeenAt_unchanged()
+    {
+        await SeedSoupsAsync();
+        var client = _factory.CreateClient();
+        var list = await client.GetFromJsonAsync<JsonElement>("/api/recipes");
+        var id = list[0].GetProperty("id").GetInt32();
+
+        await client.GetAsync($"/api/recipes/{id}");
+        var seenAtAfterFirstGet = await SeenAtAsync(id);
+
+        await client.GetAsync($"/api/recipes/{id}");
+        var seenAtAfterSecondGet = await SeenAtAsync(id);
+
+        Assert.IsNotNull(seenAtAfterFirstGet);
+        Assert.AreEqual(seenAtAfterFirstGet, seenAtAfterSecondGet);
+    }
+
+    private static async Task<DateTimeOffset?> SeenAtAsync(int id)
+    {
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<RecipeJoeDbContext>();
+        return await db.Recipes.AsNoTracking().Where(r => r.Id == id).Select(r => r.SeenAt).SingleAsync();
+    }
+
+    [TestMethod]
+    public async Task A_backfilled_Recipe_is_not_new()
+    {
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<RecipeJoeDbContext>();
+        var recipe = new Recipe
+        {
+            Title = "Backfilled",
+            SourceUrl = "http://fixtures.test/recipes/old.html",
+            CreatedAt = DateTimeOffset.UtcNow.AddDays(-30),
+        };
+        recipe.SeenAt = recipe.CreatedAt;
+        db.Recipes.Add(recipe);
+        await db.SaveChangesAsync();
+
+        var list = await _factory.CreateClient().GetFromJsonAsync<JsonElement>("/api/recipes");
+
+        var summary = list.EnumerateArray().Single(r => r.GetProperty("id").GetInt32() == recipe.Id);
+        Assert.IsFalse(summary.GetProperty("isNew").GetBoolean());
     }
 
     [TestMethod]
