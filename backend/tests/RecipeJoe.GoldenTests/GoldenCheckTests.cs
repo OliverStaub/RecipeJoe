@@ -1,6 +1,6 @@
 using System.Runtime.CompilerServices;
 using System.Text.Json;
-using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RecipeJoe.Api;
 using RecipeJoe.Api.Import;
@@ -37,7 +37,7 @@ public sealed class GoldenCheckTests
         var video = await LoadRecordingAsync(videoId);
         var options = LlmOptionsFromEnvironment();
         using var chat = LlmClientFactory.Create(options);
-        var extractor = new RecipeExtractor(chat, Options.Create(options), NullLogger<RecipeExtractor>.Instance);
+        var extractor = new RecipeExtractor(chat, Options.Create(options), new TestContextLogger<RecipeExtractor>(TestContext));
 
         var result = await extractor.ExtractAsync(video, TestContext.CancellationToken);
 
@@ -128,4 +128,16 @@ public sealed class GoldenCheckTests
 
     /// <summary>The source directory, so a fresh recording lands next to the committed ones.</summary>
     private static string RecordingsDirectory([CallerFilePath] string thisFile = "") => Path.Combine(Path.GetDirectoryName(thisFile)!, "Recordings");
+
+    /// <summary>Surfaces the extractor's own diagnostics (raw bad replies, skipped entries) in the test output.</summary>
+    private sealed class TestContextLogger<T>(TestContext context) : ILogger<T>
+    {
+        public IDisposable? BeginScope<TState>(TState state)
+            where TState : notnull => null;
+
+        public bool IsEnabled(LogLevel logLevel) => true;
+
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter) =>
+            context.WriteLine($"[{logLevel}] {formatter(state, exception)}{(exception is null ? "" : $" {exception.Message}")}");
+    }
 }

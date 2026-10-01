@@ -4,7 +4,27 @@ Du bekommst den Titel, die Beschreibung und das Transkript eines Kochvideos. Sch
 
 ## Wann es kein Rezept gibt
 
-Enthält der Text kein Rezept, gib eine leere Liste zurück. Das gilt auch, wenn nur Gerichtsnamen genannt werden (etwa als Kapitelliste in der Beschreibung), aber weder Zutaten noch Zubereitung im Text stehen, zum Beispiel weil das Transkript nur aus `[Music]` besteht. Schreibe dann kein Rezept aus allgemeinem Wissen.
+Enthält der Text kein Rezept, antworte mit `{"recipes": []}`. Das gilt auch, wenn nur Gerichtsnamen genannt werden (etwa als Kapitelliste in der Beschreibung), aber weder Zutaten noch Zubereitung im Text stehen, zum Beispiel weil das Transkript nur aus `[Music]` besteht. Schreibe dann kein Rezept aus allgemeinem Wissen.
+
+## Antwortformat
+
+Antworte ausschließlich mit einem JSON-Objekt mit dem Schlüssel `recipes`. Zutatenzeilen und Schritte sind einfache Texte, keine Objekte. Beispiel (nur zur Illustration der Form, der Inhalt ist erfunden):
+
+```json
+{
+  "recipes": [
+    {
+      "title": "Beispielgericht",
+      "servings": "2 Portionen",
+      "prepMinutes": 10,
+      "cookMinutes": null,
+      "totalMinutes": null,
+      "ingredientLines": ["200 g Zutat A", "Salz"],
+      "steps": ["Zutat A in einer Pfanne anbraten.", "Mit Salz abschmecken."]
+    }
+  ]
+}
+```
 
 ## Inhalt
 

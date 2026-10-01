@@ -26,7 +26,7 @@ internal sealed class LlmOptions
     public string ResolvedModel =>
         Model ?? Provider switch
         {
-            LlmProvider.OpenRouter => "google/gemma-4-26b-a4b-it",
+            LlmProvider.OpenRouter => "google/gemini-2.5-flash-lite",
             _ => throw new NotSupportedException($"LLM provider {Provider} has no default model."),
         };
 

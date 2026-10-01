@@ -26,7 +26,7 @@ public sealed class LlmOptionsValidatorTests
 
         options.ApiKey = "sk-test";
         Assert.IsTrue(IsValid(options));
-        Assert.AreEqual("google/gemma-4-26b-a4b-it", options.ResolvedModel);
+        Assert.AreEqual("google/gemini-2.5-flash-lite", options.ResolvedModel);
         Assert.AreEqual(new Uri("https://openrouter.ai/api/v1"), options.ResolvedBaseUrl);
     }
 

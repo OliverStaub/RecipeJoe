@@ -44,6 +44,16 @@ internal static class LlmClientFactory
                 var raw = previous?.Invoke(client) as ChatCompletionOptions ?? new ChatCompletionOptions();
 #pragma warning disable SCME0001 // JsonPatch is the SDK's only way to add a non-OpenAI request field.
                 raw.Patch.Set("$.provider"u8, BinaryData.FromString("""{"require_parameters":true}"""));
+                // The chat library leaves `strict` unset, so providers may treat the schema as a hint.
+                if (options.ResponseFormat is ChatResponseFormatJson { Schema: { } schema } json)
+                {
+                    raw.ResponseFormat = OpenAI.Chat.ChatResponseFormat.CreateJsonSchemaFormat(
+                        json.SchemaName ?? "response",
+                        BinaryData.FromString(schema.GetRawText()),
+                        json.SchemaDescription,
+                        jsonSchemaIsStrict: true
+                    );
+                }
 #pragma warning restore SCME0001
                 return raw;
             };

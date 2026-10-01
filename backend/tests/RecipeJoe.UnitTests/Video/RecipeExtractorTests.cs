@@ -99,6 +99,7 @@ public sealed class RecipeExtractorTests
     [DataRow("this is not json")]
     [DataRow("""{"recipes":"nope"}""")]
     [DataRow("{}")]
+    [DataRow("[]", DisplayName = "Bare array")]
     public async Task Malformed_or_schema_violating_replies_are_LlmBadOutput(string reply)
     {
         var result = await CreateExtractor(FakeChatClient.Replying(reply)).ExtractAsync(Video, CancellationToken.None);
