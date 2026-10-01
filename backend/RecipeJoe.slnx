@@ -6,6 +6,7 @@
     <Project Path="tests/RecipeJoe.ContractTests/RecipeJoe.ContractTests.csproj" />
     <Project Path="tests/RecipeJoe.GoldenTests/RecipeJoe.GoldenTests.csproj" />
     <Project Path="tests/RecipeJoe.IntegrationTests/RecipeJoe.IntegrationTests.csproj" />
+    <Project Path="tests/RecipeJoe.Sweep/RecipeJoe.Sweep.csproj" />
     <Project Path="tests/RecipeJoe.UnitTests/RecipeJoe.UnitTests.csproj" />
   </Folder>
 </Solution>

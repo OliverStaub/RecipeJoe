@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- The recorded transcripts are shared with the golden check; a sweep never records new ones. -->
+    <None Include="../RecipeJoe.GoldenTests/Recordings/*.json" Link="Recordings/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/RecipeJoe.Api/RecipeJoe.Api.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="RecipeJoe.UnitTests" />
+    <InternalsVisibleTo Include="RecipeJoe.GoldenTests" />
+  </ItemGroup>
+
+</Project>

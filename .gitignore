@@ -6,6 +6,7 @@ backend/**/obj/
 backend/**/TestResults/
 backend/**/CoverageReport/
 backend/**/StrykerOutput/
+backend/sweep-output/
 
 # Node
 frontend/node_modules/

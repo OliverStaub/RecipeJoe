@@ -121,6 +121,30 @@ test-e2e *args:
 golden *args:
     dotnet test --project tests/RecipeJoe.GoldenTests --output Detailed "$@"
 
+# Opt-in, no spend: list OpenRouter models worth sweeping, with prices, into backend/sweep-output/candidates.md (extra args: see tests/RecipeJoe.Sweep/README.md).
+[group('model sweep')]
+[working-directory('backend')]
+sweep-candidates *args:
+    dotnet run --project tests/RecipeJoe.Sweep -- candidates "$@"
+
+# Opt-in, spends credits: golden run of one model id (key from .env), result in backend/sweep-output/results/.
+[group('model sweep')]
+[working-directory('backend')]
+sweep-model model *args:
+    dotnet run --project tests/RecipeJoe.Sweep -- model "$@"
+
+# Opt-in, spends credits up to --cap (default $5): two-stage sweep over the candidates (add --dry-run to only plan it); report in backend/sweep-output/report.md.
+[group('model sweep')]
+[working-directory('backend')]
+sweep *args:
+    dotnet run --project tests/RecipeJoe.Sweep -- run "$@"
+
+# Rebuild the sweep report from saved results; no API call.
+[group('model sweep')]
+[working-directory('backend')]
+sweep-report *args:
+    dotnet run --project tests/RecipeJoe.Sweep -- report "$@"
+
 # Remove the E2E stack and its database.
 [group('tests')]
 down-e2e:

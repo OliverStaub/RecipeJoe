@@ -361,6 +361,12 @@
           "YoutubeExplode": "[6.6.2, )"
         }
       },
+      "recipejoe.sweep": {
+        "type": "Project",
+        "dependencies": {
+          "RecipeJoe.Api": "[1.0.0, )"
+        }
+      },
       "AngleSharp": {
         "type": "CentralTransitive",
         "requested": "[1.8.2, )",

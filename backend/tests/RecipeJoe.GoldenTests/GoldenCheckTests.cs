@@ -5,6 +5,7 @@ using Microsoft.Extensions.Options;
 using RecipeJoe.Api;
 using RecipeJoe.Api.Import;
 using RecipeJoe.Api.Video;
+using RecipeJoe.Sweep;
 
 namespace RecipeJoe.GoldenTests;
 
@@ -21,14 +22,8 @@ public sealed class GoldenCheckTests
 
     public TestContext TestContext { get; set; } = null!;
 
-    /// <summary>What a good extraction looks like for each video. Judged by the report below plus these hard checks: recipe count, German output, no invented numbers.</summary>
-    public static IEnumerable<object[]> Videos =>
-    [
-        // id, expected recipe count (0 = NoRecipe)
-        ["i84Sc5uvQa8", 1], // EN, one pasta dish; description states "serves 2-3"
-        ["6wR2T-PexT4", 5], // long DE, noisy start (ads, Russian), chapters "Rezept 1" to "Rezept 5"
-        ["6tMZNYQkycI", 0], // transcript is only "[Music]"; the ten recipes exist only as on-screen text
-    ];
+    /// <summary>What a good extraction looks like for each video (shared with the sweep). Judged by the report below plus these hard checks: recipe count, German output, no invented numbers.</summary>
+    public static IEnumerable<object[]> Videos => GoldenCases.All.Select(c => new object[] { c.VideoId, c.ExpectedRecipes });
 
     [TestMethod]
     [DynamicData(nameof(Videos))]
