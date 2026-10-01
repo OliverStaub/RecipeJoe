@@ -39,21 +39,21 @@ public sealed class SweepReportTests
         Assert.IsNull(SweepReport.Score(Results.Single(r => r.Model == "weak")).CostPerPass);
 
     [TestMethod]
-    public void The_Pareto_frontier_keeps_models_nobody_beats_on_both_score_and_cost()
+    public void Qualifying_models_clear_the_pass_bar_and_are_listed_cheapest_first()
     {
-        var frontier = SweepReport.ParetoFrontier([.. Results.Select(SweepReport.Score)]);
+        var qualifying = SweepReport.Qualifying([.. Results.Select(SweepReport.Score)], 0.95);
 
-        Assert.IsTrue(frontier.Select(m => m.Model).SequenceEqual(["cheap", "mid"]));
+        Assert.IsTrue(qualifying.Select(m => m.Model).SequenceEqual(["mid", "dear"]));
     }
 
     [TestMethod]
-    public void The_recommendation_is_the_cheapest_frontier_model_above_the_pass_bar()
+    public void The_recommendation_is_the_cheapest_model_above_the_pass_bar()
     {
         var scores = Results.Select(SweepReport.Score).ToList();
 
-        Assert.AreEqual("mid", SweepReport.Recommend(scores, 0.9)?.Model);
+        Assert.AreEqual("mid", SweepReport.Recommend(scores, 0.95)?.Model);
         Assert.AreEqual("cheap", SweepReport.Recommend(scores, 0.5)?.Model);
-        Assert.IsNull(SweepReport.Recommend([SweepReport.Score(Results.Single(r => r.Model == "weak"))], 0.9));
+        Assert.IsNull(SweepReport.Recommend([SweepReport.Score(Results.Single(r => r.Model == "weak"))], 0.95));
     }
 
     [TestMethod]
@@ -62,7 +62,7 @@ public sealed class SweepReportTests
         var oneRun = Model("lucky", (true, 0.001m, null), (true, 0.001m, null));
         var repeated = new ModelResult("proven", [.. Model("proven", (true, 0.02m, null), (true, 0.02m, null)).Runs, .. Model("proven", (true, 0.02m, null), (true, 0.02m, null)).Runs]);
 
-        var recommended = SweepReport.Recommend([SweepReport.Score(oneRun), SweepReport.Score(repeated)], 0.9);
+        var recommended = SweepReport.Recommend([SweepReport.Score(oneRun), SweepReport.Score(repeated)], 0.95);
 
         Assert.AreEqual("proven", recommended?.Model);
     }
@@ -73,10 +73,10 @@ public sealed class SweepReportTests
         var markdown = SweepReport.Markdown(Results, summary: null);
 
         StringAssert.Contains(markdown, "4 models, total actual spend **$0.1700**");
-        StringAssert.Contains(markdown, "`mid`: the cheapest frontier model with a pass rate of at least 90 %");
+        StringAssert.Contains(markdown, "`mid`: the cheapest model with a pass rate of at least 95 %");
         StringAssert.Contains(markdown, "| `cheap` | 1 | 50 % (1/2) | $0.0100 | $0.0100 | - | LlmBadOutput×1 | P1 |");
         StringAssert.Contains(markdown, "| `weak` | 1 | 0 % (0/2) | $0.0200 | - | - | LlmUnavailable×2 | P1 |");
-        StringAssert.Contains(markdown, "## Pareto frontier");
+        StringAssert.Contains(markdown, "## Models with a pass rate of at least 95 %");
     }
 
     [TestMethod]
@@ -151,5 +151,5 @@ public sealed class SweepReportTests
 
     [TestMethod]
     public void An_empty_result_set_recommends_nothing() =>
-        Assert.IsNull(SweepReport.Recommend([], 0.9));
+        Assert.IsNull(SweepReport.Recommend([], 0.95));
 }

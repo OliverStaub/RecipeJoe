@@ -50,7 +50,7 @@ internal static class Cli
           model <id>  [--provider NAME] [--repeats N] [--out DIR]
           run         [--max-models N] [--top N] [--repeats N] [--cap USD] [--concurrency N] [--dry-run]
                       [--max-output-price N] [--name PATTERN] [--include ID,ID] [--out DIR]
-          report      [--min-pass-rate 0.9] [--out DIR]
+          report      [--min-pass-rate 0.95] [--out DIR]
         """;
 
     private const string DefaultOutput = "sweep-output";
@@ -156,7 +156,7 @@ internal static class Cli
             return 1;
         }
 
-        var minPassRate = args.Get("min-pass-rate") is { } v ? double.Parse(v, CultureInfo.InvariantCulture) : 0.9;
+        var minPassRate = args.Get("min-pass-rate") is { } v ? double.Parse(v, CultureInfo.InvariantCulture) : SweepReport.DefaultMinPassRate;
         var file = Path.Combine(directory, "report.md");
         File.WriteAllText(file, SweepReport.Markdown(results, store.LoadSummary(), minPassRate));
         output.WriteLine($"Wrote {file}");

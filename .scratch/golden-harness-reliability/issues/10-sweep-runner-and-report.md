@@ -15,7 +15,7 @@
 - [x] Hard spend cap: stops launching new runs when the cap is reached and says so in the report
 - [x] Bounded concurrency; results are saved incrementally so an interrupted sweep can resume without re-paying for finished models
 - [x] Dry-run mode prints the planned runs and estimated cost without calling any model
-- [x] Markdown report: per-model table (pass rate, cost per pass, failure kinds, serving provider), Pareto frontier of score vs cost, recommended model, total actual spend
+- [x] Markdown report: per-model table (pass rate, cost per pass, failure kinds, serving provider), list of models above the pass bar (95 %, `--min-pass-rate`), recommended model, total actual spend
 - [x] Report written to a gitignored output directory; README section explains how to run it, what it costs, and that the key is taken from `.env`
 - [x] Report generation is a separate step that works from saved result files, so the report can be regenerated or tested without any API call
 - [x] Agent-verifiable: tests with a fake client cover both stages, spend cap, resume and report output from fixture results; dry-run works with no key
@@ -24,6 +24,6 @@
 ## Comments
 
 - `just sweep` (`run` command), `just sweep --dry-run` (no key; prints planned runs and estimate), `just sweep-report` (from saved files). Output in `backend/sweep-output/` (gitignored); docs in `backend/tests/RecipeJoe.Sweep/README.md`.
-- Stage 2 pins the provider that served stage 1 when it was a single one. Recommendation = cheapest Pareto-frontier model with pass rate >= 90 % among the models with the most runs (so a lucky one-run model doesn't beat a repeated one).
+- Stage 2 pins the provider that served stage 1 when it was a single one. Recommendation = cheapest model with pass rate >= 95 % (Pareto frontier dropped on request) among the models with the most runs (so a lucky one-run model doesn't beat a repeated one).
 - Cap is checked before each run is launched; runs in flight finish, so the spend can overshoot slightly.
 - **Still open (user-run):** first real `just sweep --cap 2 --max-output-price 1 --max-models 20` (try `--dry-run` first); record spend and report here.

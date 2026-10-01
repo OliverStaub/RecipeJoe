@@ -30,7 +30,7 @@ Results are saved per model as they finish. Rerun `just sweep` after an interrup
 
 ## Speed
 
-The report shows wall-clock time per golden pass (median and worst over the runs). It includes retry backoff and, with `--concurrency` above 1, some queueing, so it ranks models but isn't exact latency; use `--concurrency 1` for cleaner numbers. Speed is information only: the Pareto frontier and recommendation stay on score vs cost. Results saved before timings existed show `-`.
+The report shows wall-clock time per golden pass (median and worst over the runs). It includes retry backoff and, with `--concurrency` above 1, some queueing, so it ranks models but isn't exact latency; use `--concurrency 1` for cleaner numbers. Speed is information only: the recommendation stays on pass rate and cost. Results saved before timings existed show `-`.
 
 ## What it costs
 

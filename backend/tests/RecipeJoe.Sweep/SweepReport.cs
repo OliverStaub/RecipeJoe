@@ -29,6 +29,9 @@ internal sealed record ModelScore(string Model, int Runs, int Passed, int Total,
 /// <summary>Turns saved results into the report. Pure: no network, so it can be regenerated or tested from files alone.</summary>
 internal static class SweepReport
 {
+    /// <summary>A model must pass at least this share of golden cases to be recommended.</summary>
+    public const double DefaultMinPassRate = 0.95;
+
     public static ModelScore Score(ModelResult result)
     {
         var cases = result.Runs.SelectMany(r => r.Cases).ToList();
@@ -44,13 +47,11 @@ internal static class SweepReport
         );
     }
 
-    /// <summary>Models no other model beats on both axes: nobody is at least as good for less money (or better for the same money).</summary>
-    public static IReadOnlyList<ModelScore> ParetoFrontier(IReadOnlyList<ModelScore> scores) =>
-        [.. scores
-            .Where(m => !scores.Any(o => o != m && o.PassRate >= m.PassRate && o.CostPerRun <= m.CostPerRun && (o.PassRate > m.PassRate || o.CostPerRun < m.CostPerRun)))
-            .OrderBy(m => m.CostPerRun)];
+    /// <summary>Models that clear the bar, cheapest first.</summary>
+    public static IReadOnlyList<ModelScore> Qualifying(IReadOnlyList<ModelScore> scores, double minPassRate) =>
+        [.. scores.Where(m => m.PassRate >= minPassRate).OrderBy(m => m.CostPerRun).ThenBy(m => m.Model, StringComparer.Ordinal)];
 
-    /// <summary>The cheapest frontier model that clears <paramref name="minPassRate"/>, judged only among the models with the most runs (the stage-2 survivors, when there are any); null when none clears it.</summary>
+    /// <summary>The cheapest model that clears <paramref name="minPassRate"/>, judged only among the models with the most runs (the stage-2 survivors, when there are any); null when none clears it.</summary>
     public static ModelScore? Recommend(IReadOnlyList<ModelScore> scores, double minPassRate)
     {
         if (scores.Count == 0)
@@ -59,14 +60,14 @@ internal static class SweepReport
         }
 
         var deepest = scores.Max(s => s.Runs);
-        var eligible = scores.Where(s => s.Runs == deepest).ToList();
-        return ParetoFrontier(eligible).FirstOrDefault(m => m.PassRate >= minPassRate);
+        var qualifying = Qualifying([.. scores.Where(s => s.Runs == deepest)], minPassRate);
+        return qualifying.Count == 0 ? null : qualifying[0];
     }
 
-    public static string Markdown(IReadOnlyList<ModelResult> results, SweepSummary? summary, double minPassRate = 0.9)
+    public static string Markdown(IReadOnlyList<ModelResult> results, SweepSummary? summary, double minPassRate = DefaultMinPassRate)
     {
         var scores = results.Select(Score).OrderByDescending(s => s.PassRate).ThenBy(s => s.CostPerRun).ThenBy(s => s.Model, StringComparer.Ordinal).ToList();
-        var frontier = ParetoFrontier(scores);
+        var qualifying = Qualifying(scores, minPassRate);
         var recommended = Recommend(scores, minPassRate);
         var spent = results.Sum(r => r.CostUsd);
 
@@ -84,19 +85,24 @@ internal static class SweepReport
         text.AppendLine("## Recommended model");
         text.AppendLine();
         var verdict = recommended is null
-            ? string.Create(CultureInfo.InvariantCulture, $"None: no model with the most runs reached a pass rate of {minPassRate:P0} on the Pareto frontier.")
-            : string.Create(CultureInfo.InvariantCulture, $"`{recommended.Model}`: the cheapest frontier model with a pass rate of at least {minPassRate:P0} ({recommended.PassRate:P0} over {recommended.Runs} run(s), {Usd(recommended.CostPerRun)} per golden pass){(recommended.Runs == 1 ? ". **Unconfirmed:** only one run, no stage-2 repeats (the sweep may have stopped early)." : "")}");
+            ? string.Create(CultureInfo.InvariantCulture, $"None: no model with the most runs reached a pass rate of {minPassRate:P0}.")
+            : string.Create(CultureInfo.InvariantCulture, $"`{recommended.Model}`: the cheapest model with a pass rate of at least {minPassRate:P0} ({recommended.PassRate:P0} over {recommended.Runs} run(s), {Usd(recommended.CostPerRun)} per golden pass){(recommended.Runs == 1 ? ". **Unconfirmed:** only one run, no stage-2 repeats (the sweep may have stopped early)." : "")}");
         text.AppendLine(verdict);
         text.AppendLine();
-        text.AppendLine("## Pareto frontier (score vs cost)");
+        text.AppendLine(CultureInfo.InvariantCulture, $"## Models with a pass rate of at least {minPassRate:P0}");
         text.AppendLine();
-        text.AppendLine("No other model passes at least as often for less money.");
+        text.AppendLine("Cheapest first.");
         text.AppendLine();
-        text.AppendLine("| Model | Pass rate | $ per golden pass |");
-        text.AppendLine("|---|---:|---:|");
-        foreach (var m in frontier)
+        text.AppendLine("| Model | Runs | Pass rate | $ per golden pass | Time per golden pass (median / worst) |");
+        text.AppendLine("|---|---:|---:|---:|---:|");
+        foreach (var m in qualifying)
         {
-            text.AppendLine(CultureInfo.InvariantCulture, $"| `{m.Model}` | {m.PassRate:P0} | {Usd(m.CostPerRun)} |");
+            text.AppendLine(CultureInfo.InvariantCulture, $"| `{m.Model}` | {m.Runs} | {m.PassRate:P0} ({m.Passed}/{m.Total}) | {Usd(m.CostPerRun)} | {Time(m)} |");
+        }
+
+        if (qualifying.Count == 0)
+        {
+            text.AppendLine("| none | | | | |");
         }
 
         text.AppendLine();
