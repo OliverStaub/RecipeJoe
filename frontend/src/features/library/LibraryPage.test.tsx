@@ -1,8 +1,37 @@
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import { HttpResponse, delay } from 'msw';
 import userEvent from '@testing-library/user-event';
+import type { components } from '@/api/schema';
 import { http, server } from '@/test/server';
 import { renderApp } from '@/test/render';
+
+type Import = components['schemas']['ImportDto'];
+type RecipeSummary = components['schemas']['RecipeSummaryDto'];
+
+const pendingImport = {
+  id: '11111111-1111-1111-1111-111111111111',
+  url: 'http://www.x.test/recipes/a',
+  kind: 'Web',
+  state: 'Pending',
+  stage: 'Extracting',
+  failure: null,
+} as const;
+
+const failedImport = {
+  id: '22222222-2222-2222-2222-222222222222',
+  url: 'http://x.test/b',
+  kind: 'Web',
+  state: 'Failed',
+  stage: null,
+  failure: 'Unreachable',
+} as const;
+
+const dismissOnlyFailedImport = {
+  ...failedImport,
+  id: '33333333-3333-3333-3333-333333333333',
+  url: 'http://x.test/c',
+  failure: 'NotFound',
+} as const;
 
 const summary = {
   id: 7,
@@ -50,6 +79,25 @@ it('invites to import when the Library is empty', async () => {
   expect(
     await screen.findByText('Importiere dein erstes Rezept'),
   ).toBeInTheDocument();
+});
+
+it('does not flash the invite message while Imports are still loading', async () => {
+  server.use(
+    http.get('/api/recipes', ({ response }) => response(200).json([])),
+    http.get('/api/imports', async ({ response }) => {
+      await delay(300);
+      return response(200).json([pendingImport]);
+    }),
+  );
+  renderApp();
+
+  // The Library resolves quickly (empty); Imports is still in flight.
+  await delay(50);
+  expect(
+    screen.queryByText('Importiere dein erstes Rezept'),
+  ).not.toBeInTheDocument();
+
+  await screen.findByText('x.test/recipes/a');
 });
 
 it('says nothing matched when a search has no hits', async () => {
@@ -139,4 +187,155 @@ it('does not retry a client error', async () => {
     await screen.findByText('Rezepte konnten nicht geladen werden.'),
   ).toBeInTheDocument();
   expect(requests).toBe(1);
+});
+
+function importRow(urlLabel: string) {
+  const row = screen
+    .getAllByRole('listitem')
+    .find((li) => li.textContent?.includes(urlLabel));
+  if (!row) throw new Error(`No row found for "${urlLabel}"`);
+  return row;
+}
+
+it('shows a Pending Import as a row with its URL label and stage', async () => {
+  server.use(
+    http.get('/api/recipes', ({ response }) => response(200).json([])),
+    http.get('/api/imports', ({ response }) =>
+      response(200).json([pendingImport]),
+    ),
+  );
+  renderApp();
+
+  expect(await screen.findByText('x.test/recipes/a')).toBeInTheDocument();
+  expect(screen.getByText('Rezept wird gelesen…')).toBeInTheDocument();
+  expect(
+    screen.queryByText('Importiere dein erstes Rezept'),
+  ).not.toBeInTheDocument();
+});
+
+it('shows a Failed Import with its message, offering retry only when it can help', async () => {
+  server.use(
+    http.get('/api/recipes', ({ response }) => response(200).json([])),
+    http.get('/api/imports', ({ response }) =>
+      response(200).json([failedImport, dismissOnlyFailedImport]),
+    ),
+  );
+  renderApp();
+  await screen.findByText('x.test/b');
+
+  const retryable = importRow('x.test/b');
+  expect(
+    within(retryable).getByText(
+      'Die Seite ist nicht erreichbar. Prüfe die Adresse und versuch es nochmal.',
+    ),
+  ).toBeInTheDocument();
+  expect(
+    within(retryable).getByRole('button', { name: 'Erneut versuchen' }),
+  ).toBeInTheDocument();
+  within(retryable).getByRole('button', { name: 'Verwerfen' });
+
+  const dismissOnly = importRow('x.test/c');
+  expect(
+    within(dismissOnly).getByText('Diese Seite existiert nicht.'),
+  ).toBeInTheDocument();
+  expect(
+    within(dismissOnly).queryByRole('button', { name: 'Erneut versuchen' }),
+  ).not.toBeInTheDocument();
+  within(dismissOnly).getByRole('button', { name: 'Verwerfen' });
+});
+
+it('retries a Failed Import, turning it back into a Pending row in place', async () => {
+  let current: Import = failedImport;
+  server.use(
+    http.get('/api/recipes', ({ response }) => response(200).json([])),
+    http.get('/api/imports', ({ response }) => response(200).json([current])),
+    http.post('/api/imports/{id}/retry', ({ response }) => {
+      current = {
+        ...failedImport,
+        state: 'Pending',
+        stage: 'Fetching',
+        failure: null,
+      };
+      return response(202).json(current);
+    }),
+  );
+  const user = userEvent.setup();
+  renderApp();
+  await user.click(
+    await screen.findByRole('button', { name: 'Erneut versuchen' }),
+  );
+
+  expect(await screen.findByText('Seite wird geladen…')).toBeInTheDocument();
+  expect(
+    screen.queryByRole('button', { name: 'Erneut versuchen' }),
+  ).not.toBeInTheDocument();
+});
+
+it('dismisses a Failed Import, removing its row, without refetching the Library', async () => {
+  let libraryLoads = 0;
+  server.use(
+    http.get('/api/recipes', ({ response }) => {
+      libraryLoads++;
+      return response(200).json([]);
+    }),
+    http.get('/api/imports', ({ response }) =>
+      response(200).json([failedImport]),
+    ),
+    http.delete('/api/imports/{id}', ({ response }) => response(204).empty()),
+  );
+  const user = userEvent.setup();
+  renderApp();
+  await waitFor(() => expect(libraryLoads).toBe(1));
+  await user.click(await screen.findByRole('button', { name: 'Verwerfen' }));
+
+  await waitFor(() =>
+    expect(screen.queryByText('x.test/b')).not.toBeInTheDocument(),
+  );
+  expect(libraryLoads).toBe(1);
+});
+
+it('keeps Import rows visible while searching', async () => {
+  server.use(
+    http.get('/api/recipes', ({ request, response }) =>
+      response(200).json(
+        new URL(request.url).searchParams.has('q') ? [] : [summary],
+      ),
+    ),
+    http.get('/api/imports', ({ response }) =>
+      response(200).json([failedImport]),
+    ),
+  );
+  const user = userEvent.setup();
+  renderApp();
+  await screen.findByText('x.test/b');
+
+  await user.type(searchBox(), 'xyz');
+
+  await screen.findByText('Keine Rezepte zu „xyz"');
+  expect(screen.getByText('x.test/b')).toBeInTheDocument();
+});
+
+it('shows a Recipe once its Import vanishes from the list', async () => {
+  let imports: Import[] = [pendingImport];
+  let recipes: RecipeSummary[] = [];
+  server.use(
+    http.get('/api/recipes', ({ response }) => response(200).json(recipes)),
+    http.get('/api/imports', ({ response }) => response(200).json(imports)),
+  );
+  renderApp();
+  await screen.findByText('x.test/recipes/a');
+
+  imports = [];
+  recipes = [summary];
+
+  await waitFor(
+    () =>
+      expect(screen.queryByText('x.test/recipes/a')).not.toBeInTheDocument(),
+    {
+      timeout: 3000,
+    },
+  );
+  expect(
+    await screen.findByRole('link', { name: /Kartoffelsuppe/ }),
+  ).toBeInTheDocument();
 });

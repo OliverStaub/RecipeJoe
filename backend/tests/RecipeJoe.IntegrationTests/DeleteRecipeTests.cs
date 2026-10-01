@@ -21,12 +21,8 @@ public sealed class DeleteRecipeTests
     [TestCleanup]
     public async Task ResetDatabaseAsync() => await _factory.ResetDatabaseAsync();
 
-    private static async Task<int> ImportAsync(HttpClient client, string page)
-    {
-        var response = await client.PostAsJsonAsync("/api/recipes/import", new { url = $"http://fixtures.test/recipes/{page}" });
-        Assert.AreEqual(HttpStatusCode.Created, response.StatusCode, page);
-        return (await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
-    }
+    private static Task<int> ImportAsync(HttpClient client, string page) =>
+        ImportsTestHelper.ImportFixtureAsync(client, page);
 
     private static async Task<int> CountAsync(Func<RecipeJoeDbContext, Task<int>> count)
     {

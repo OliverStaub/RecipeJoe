@@ -1,10 +1,8 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { delay } from 'msw';
-import { HttpResponse } from 'msw';
-import type { components } from '@/api/schema';
 import { http, server } from '@/test/server';
-import { recipe, renderApp } from '@/test/render';
+import { renderApp } from '@/test/render';
 
 async function openDialog() {
   const user = userEvent.setup();
@@ -14,24 +12,38 @@ async function openDialog() {
 }
 
 const urlInput = () => screen.getByRole('textbox', { name: 'Webadresse' });
+const importButton = () => screen.getByRole('button', { name: 'Importieren' });
+const dialogSubmit = () =>
+  within(screen.getByRole('dialog')).getByRole('button', {
+    name: 'Importieren',
+  });
+
+const pendingImport = {
+  id: '11111111-1111-1111-1111-111111111111',
+  url: 'http://x.test/a',
+  kind: 'Web',
+  state: 'Pending',
+  stage: 'Fetching',
+  failure: null,
+} as const;
 
 it('shows the failure message and clears it when the URL is edited', async () => {
   server.use(
-    http.post('/api/recipes/import', ({ response }) =>
-      response(422).json(
-        { type: 't', title: 'x', status: 422, kind: 'NoRecipe' },
+    http.post('/api/imports', ({ response }) =>
+      response(400).json(
+        { type: 't', title: 'x', status: 400, kind: 'InvalidUrl' },
         { headers: { 'content-type': 'application/problem+json' } },
       ),
     ),
   );
   const user = await openDialog();
 
-  await user.type(urlInput(), 'http://x.test/a');
+  await user.type(urlInput(), 'not a url');
   await user.click(screen.getByRole('button', { name: 'Importieren' }));
 
   expect(await screen.findByText('Import fehlgeschlagen')).toBeInTheDocument();
   expect(
-    screen.getByText('Auf dieser Seite wurde kein Rezept gefunden.'),
+    screen.getByText('Das ist keine gültige Webadresse.'),
   ).toBeInTheDocument();
 
   await user.type(urlInput(), 'b');
@@ -39,11 +51,11 @@ it('shows the failure message and clears it when the URL is edited', async () =>
   expect(screen.queryByText('Import fehlgeschlagen')).not.toBeInTheDocument();
 });
 
-it('disables the form and cannot be closed while importing', async () => {
+it('disables the form and cannot be closed while starting', async () => {
   server.use(
-    http.post('/api/recipes/import', async ({ response }) => {
+    http.post('/api/imports', async ({ response }) => {
       await delay(200);
-      return response(201).json(recipe);
+      return response(202).json(pendingImport);
     }),
   );
   const user = await openDialog();
@@ -62,30 +74,23 @@ it('disables the form and cannot be closed while importing', async () => {
   );
 });
 
-it('closes, toasts and opens the Cook View on success', async () => {
+it('closes and clears the URL on 202, without opening the Cook View', async () => {
   server.use(
-    http.post('/api/recipes/import', ({ response }) =>
-      response(201).json(recipe),
+    http.get('/api/recipes', ({ response }) => response(200).json([])),
+    http.post('/api/imports', ({ response }) =>
+      response(202).json(pendingImport),
     ),
-    http.get('/api/recipes/{id}', ({ response }) => response(200).json(recipe)),
   );
   const user = await openDialog();
 
   await user.type(urlInput(), 'http://x.test/a');
-  await user.click(screen.getByRole('button', { name: 'Importieren' }));
+  await user.click(dialogSubmit());
 
-  expect(
-    await screen.findByRole('heading', { name: 'Kartoffelsuppe' }),
-  ).toBeInTheDocument();
-  expect(await screen.findAllByText('Rezept importiert')).not.toHaveLength(0);
-  expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  await waitFor(() =>
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument(),
+  );
+  expect(screen.queryByRole('link')).not.toBeInTheDocument();
 });
-
-const importButton = () => screen.getByRole('button', { name: 'Importieren' });
-const dialogSubmit = () =>
-  within(screen.getByRole('dialog')).getByRole('button', {
-    name: 'Importieren',
-  });
 
 it('only enables submit for a non-blank URL', async () => {
   const user = await openDialog();
@@ -101,33 +106,34 @@ it('only enables submit for a non-blank URL', async () => {
 it('sends the trimmed URL, also when submitted with Enter', async () => {
   const bodies: unknown[] = [];
   server.use(
-    http.post('/api/recipes/import', async ({ request, response }) => {
+    http.post('/api/imports', async ({ request, response }) => {
       bodies.push(await request.json());
-      return response(201).json(recipe);
+      return response(202).json(pendingImport);
     }),
-    http.get('/api/recipes/{id}', ({ response }) => response(200).json(recipe)),
   );
   const user = await openDialog();
 
   await user.type(urlInput(), '  http://x.test/a {Enter}');
 
-  await screen.findByRole('heading', { name: 'Kartoffelsuppe' });
+  await waitFor(() =>
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument(),
+  );
   expect(bodies).toEqual([{ url: 'http://x.test/a' }]);
 });
 
-it('starts empty again after a successful import', async () => {
+it('starts empty again after a successful start', async () => {
   server.use(
-    http.post('/api/recipes/import', ({ response }) =>
-      response(201).json(recipe),
+    http.post('/api/imports', ({ response }) =>
+      response(202).json(pendingImport),
     ),
-    http.get('/api/recipes/{id}', ({ response }) => response(200).json(recipe)),
   );
   const user = await openDialog();
   await user.type(urlInput(), 'http://x.test/a');
   await user.click(dialogSubmit());
-  await screen.findByRole('heading', { name: 'Kartoffelsuppe' });
+  await waitFor(() =>
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument(),
+  );
 
-  await user.click(screen.getByRole('link', { name: /Rezepte/ }));
   await user.click(await screen.findByRole('button', { name: 'Importieren' }));
 
   expect(urlInput()).toHaveValue('');
@@ -135,8 +141,11 @@ it('starts empty again after a successful import', async () => {
 
 it('forgets a failure when the dialog is closed and reopened', async () => {
   server.use(
-    http.post('/api/recipes/import', ({ response }) =>
-      response.untyped(HttpResponse.json({}, { status: 500 })),
+    http.post('/api/imports', ({ response }) =>
+      response(400).json(
+        { type: 't', title: 'x', status: 400, kind: 'InvalidUrl' },
+        { headers: { 'content-type': 'application/problem+json' } },
+      ),
     ),
   );
   const user = await openDialog();
@@ -153,11 +162,11 @@ it('forgets a failure when the dialog is closed and reopened', async () => {
   expect(screen.queryByText('Import fehlgeschlagen')).not.toBeInTheDocument();
 });
 
-it('offers a close button, except while importing', async () => {
+it('offers a close button, except while starting', async () => {
   server.use(
-    http.post('/api/recipes/import', async ({ response }) => {
+    http.post('/api/imports', async ({ response }) => {
       await delay(200);
-      return response(201).json(recipe);
+      return response(202).json(pendingImport);
     }),
   );
   const user = await openDialog();
@@ -171,55 +180,4 @@ it('offers a close button, except while importing', async () => {
   await waitFor(() =>
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument(),
   );
-});
-
-it('refreshes the Library before opening the Cook View', async () => {
-  let libraryLoads = 0;
-  server.use(
-    http.get('/api/recipes', ({ response }) => {
-      libraryLoads++;
-      return response(200).json([]);
-    }),
-    http.post('/api/recipes/import', ({ response }) =>
-      response(201).json(recipe),
-    ),
-    http.get('/api/recipes/{id}', ({ response }) => response(200).json(recipe)),
-  );
-  const user = await openDialog();
-  await waitFor(() => expect(libraryLoads).toBe(1));
-  await user.type(urlInput(), 'http://x.test/a');
-  await user.click(dialogSubmit());
-
-  await screen.findByRole('heading', { name: 'Kartoffelsuppe' });
-  expect(libraryLoads).toBe(2);
-});
-
-it('lists the imported Recipe back in the Library', async () => {
-  let library: components['schemas']['RecipeSummaryDto'][] = [];
-  server.use(
-    http.get('/api/recipes', ({ response }) => response(200).json(library)),
-    http.post('/api/recipes/import', ({ response }) => {
-      library = [
-        {
-          id: 7,
-          title: 'Kartoffelsuppe',
-          sourceUrl: 'http://x.test/a',
-          hasImage: false,
-        },
-      ];
-      return response(201).json(recipe);
-    }),
-    http.get('/api/recipes/{id}', ({ response }) => response(200).json(recipe)),
-  );
-  const user = await openDialog();
-  await screen.findByText('Importiere dein erstes Rezept');
-  await user.type(urlInput(), 'http://x.test/a');
-  await user.click(dialogSubmit());
-  await screen.findByRole('heading', { name: 'Kartoffelsuppe' });
-
-  await user.click(screen.getByRole('link', { name: /Rezepte/ }));
-
-  expect(
-    await screen.findByRole('link', { name: /Kartoffelsuppe/ }),
-  ).toBeInTheDocument();
 });

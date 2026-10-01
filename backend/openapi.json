@@ -5,56 +5,6 @@
     "version": "1.0.0"
   },
   "paths": {
-    "/api/recipes/import": {
-      "post": {
-        "tags": [
-          "ImportEndpoints"
-        ],
-        "operationId": "ImportRecipe",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ImportRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "description": "Created",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/RecipeDto"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ImportProblem"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Unprocessable Entity",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ImportProblem"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/imports": {
       "post": {
         "tags": [
@@ -379,7 +329,8 @@
           "BadResponse",
           "ForbiddenAddress",
           "NoRecipe",
-          "SaveFailed"
+          "SaveFailed",
+          null
         ]
       },
       "ImportKind": {
@@ -387,41 +338,6 @@
           "Web",
           "Video"
         ]
-      },
-      "ImportProblem": {
-        "required": [
-          "type",
-          "title",
-          "status",
-          "kind"
-        ],
-        "type": "object",
-        "properties": {
-          "type": {
-            "type": "string"
-          },
-          "title": {
-            "type": "string"
-          },
-          "status": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "kind": {
-            "$ref": "#/components/schemas/ImportFailure"
-          }
-        }
-      },
-      "ImportRequest": {
-        "required": [
-          "url"
-        ],
-        "type": "object",
-        "properties": {
-          "url": {
-            "type": "string"
-          }
-        }
       },
       "ImportsProblem": {
         "required": [
@@ -576,9 +492,6 @@
     }
   },
   "tags": [
-    {
-      "name": "ImportEndpoints"
-    },
     {
       "name": "ImportsEndpoints"
     },

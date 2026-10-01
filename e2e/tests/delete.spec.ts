@@ -1,13 +1,13 @@
 import { randomUUID } from 'node:crypto';
 import { expect, test, type APIRequestContext } from '@playwright/test';
+import { importViaApi } from './imports';
 
 async function importRecipe(request: APIRequestContext) {
   const token = randomUUID();
-  const response = await request.post('/api/recipes/import', {
-    data: { url: `http://fixtures/e2e/recipe.html?t=${token}` },
-  });
-  expect(response.status()).toBe(201);
-  const { id } = (await response.json()) as { id: number };
+  const id = await importViaApi(
+    request,
+    `http://fixtures/e2e/recipe.html?t=${token}`,
+  );
   return { id, title: `Testrezept ${token}` };
 }
 

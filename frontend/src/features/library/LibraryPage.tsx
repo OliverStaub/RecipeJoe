@@ -12,12 +12,14 @@ import { Input } from '@/components/ui/input';
 import { DeleteRecipeDialog } from '@/features/delete-recipe/DeleteRecipeDialog';
 import { ImportDialog } from '@/features/import/ImportDialog';
 import { sourceHost } from '@/lib/sourceHost';
-import { useRecipes } from '@/api/recipes';
+import { useImports, useRecipes } from '@/api/recipes';
+import { ImportRow } from './ImportRow';
 import { useLibrarySearch } from './useLibrarySearch';
 
 export function LibraryPage() {
   const { input, setInput, q } = useLibrarySearch();
   const { data: recipes, isPlaceholderData, isError } = useRecipes(q);
+  const { data: imports } = useImports();
   const [toDelete, setToDelete] = useState<{
     id: number;
     title: string;
@@ -50,22 +52,27 @@ export function LibraryPage() {
           Rezepte konnten nicht geladen werden.
         </p>
       )}
-      {recipes?.length === 0 && !isPlaceholderData && (
-        <p className="py-8 text-center text-muted-foreground">
-          {q ? (
-            `Keine Rezepte zu „${q}"`
-          ) : (
-            <>
-              Importiere dein erstes Rezept
-              <br />
-              <span className="text-sm">
-                Über „Importieren" oben rechts fügst du eine Webadresse ein.
-              </span>
-            </>
-          )}
-        </p>
-      )}
+      {recipes?.length === 0 &&
+        !isPlaceholderData &&
+        (q || (imports !== undefined && imports.length === 0)) && (
+          <p className="py-8 text-center text-muted-foreground">
+            {q ? (
+              `Keine Rezepte zu „${q}"`
+            ) : (
+              <>
+                Importiere dein erstes Rezept
+                <br />
+                <span className="text-sm">
+                  Über „Importieren" oben rechts fügst du eine Webadresse ein.
+                </span>
+              </>
+            )}
+          </p>
+        )}
       <ul className="divide-y">
+        {imports?.map((importDto) => (
+          <ImportRow key={importDto.id} importDto={importDto} />
+        ))}
         {recipes?.map((recipe) => (
           <li key={recipe.id} className="flex items-center gap-1">
             <Link

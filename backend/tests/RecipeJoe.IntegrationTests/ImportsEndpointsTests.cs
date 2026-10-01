@@ -27,21 +27,8 @@ public sealed class ImportsEndpointsTests
         return [.. list.EnumerateArray()];
     }
 
-    private static async Task WaitUntilGoneAsync(HttpClient client, Guid id)
-    {
-        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(10);
-        while (DateTime.UtcNow < deadline)
-        {
-            if (!(await ListImportsAsync(client)).Any(i => i.GetProperty("id").GetGuid() == id))
-            {
-                return;
-            }
-
-            await Task.Delay(50);
-        }
-
-        Assert.Fail($"Import {id} did not disappear in time.");
-    }
+    private static Task WaitUntilGoneAsync(HttpClient client, Guid id) =>
+        ImportsTestHelper.WaitUntilGoneAsync(client, id);
 
     private static async Task<JsonElement> WaitUntilFailedAsync(HttpClient client, Guid id)
     {
@@ -79,7 +66,19 @@ public sealed class ImportsEndpointsTests
         await WaitUntilGoneAsync(client, id);
 
         var recipes = await client.GetFromJsonAsync<JsonElement>("/api/recipes");
-        Assert.IsTrue(recipes.EnumerateArray().Any(r => r.GetProperty("title").GetString() == "Kartoffelsuppe"));
+        var summary = recipes.EnumerateArray().First(r => r.GetProperty("sourceUrl").GetString() == url);
+        var recipe = await client.GetFromJsonAsync<JsonElement>($"/api/recipes/{summary.GetProperty("id").GetInt32()}");
+        Assert.AreEqual("Kartoffelsuppe", recipe.GetProperty("title").GetString());
+        Assert.AreEqual("4 Portionen", recipe.GetProperty("servings").GetString());
+        Assert.AreEqual(15, recipe.GetProperty("prepMinutes").GetInt32());
+        Assert.AreEqual(30, recipe.GetProperty("cookMinutes").GetInt32());
+        Assert.AreEqual(45, recipe.GetProperty("totalMinutes").GetInt32());
+        Assert.AreEqual(url, recipe.GetProperty("sourceUrl").GetString());
+        Assert.AreEqual(JsonValueKind.Null, recipe.GetProperty("imageUrl").ValueKind);
+        Assert.AreEqual(4, recipe.GetProperty("ingredientLines").GetArrayLength());
+        Assert.AreEqual("800 g Kartoffeln", recipe.GetProperty("ingredientLines")[0].GetString());
+        Assert.AreEqual(3, recipe.GetProperty("steps").GetArrayLength());
+        Assert.AreEqual("Pürieren und abschmecken.", recipe.GetProperty("steps")[2].GetString());
     }
 
     [TestMethod]
@@ -114,6 +113,7 @@ public sealed class ImportsEndpointsTests
     [TestMethod]
     [DataRow(403, "text/html", "Blocked")]
     [DataRow(500, "text/html", "BadResponse")]
+    [DataRow(200, "application/pdf", "BadResponse")]
     public async Task A_rejected_site_response_ends_the_import_as_Failed_with_the_kind(int fetchStatus, string contentType, string expectedKind)
     {
         var url = $"http://canned.test/imports/{fetchStatus}/{contentType}";

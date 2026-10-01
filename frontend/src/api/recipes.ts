@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import {
   keepPreviousData,
   useQuery,
@@ -7,6 +8,7 @@ import { $api, HttpError } from './client';
 import type { components } from './schema';
 
 type Recipe = components['schemas']['RecipeDto'];
+type Import = components['schemas']['ImportDto'];
 
 export type RecipeState =
   | { status: 'loading' }
@@ -47,15 +49,6 @@ export function useRecipe(id: number): RecipeState {
   return { status: 'loaded', recipe: query.data };
 }
 
-/** Imports a Recipe from a URL; waits for the Library to refetch, so it lists the Recipe before the Cook View opens. */
-export function useImportRecipe() {
-  const queryClient = useQueryClient();
-  return $api.useMutation('post', '/api/recipes/import', {
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: allLibraryQueries }),
-  });
-}
-
 /** Deletes a Recipe; drops its cached entry (other Recipes' stay) and refetches the Library without waiting. */
 export function useDeleteRecipe() {
   const queryClient = useQueryClient();
@@ -67,5 +60,74 @@ export function useDeleteRecipe() {
       });
       void queryClient.invalidateQueries({ queryKey: allLibraryQueries });
     },
+  });
+}
+
+const importsQuery = $api.queryOptions('get', '/api/imports');
+
+function setImports(
+  queryClient: ReturnType<typeof useQueryClient>,
+  update: (imports: Import[]) => Import[],
+) {
+  queryClient.setQueryData<Import[]>(importsQuery.queryKey, (old) =>
+    update(old ?? []),
+  );
+}
+
+/** Pending and Failed Imports; polls while any is Pending, stops when idle. A Pending Import vanishing (succeeding) invalidates the Library; a dismissed Failed one doesn't. */
+export function useImports() {
+  const queryClient = useQueryClient();
+  const previousStates = useRef<Map<string, Import['state']> | null>(null);
+  const query = useQuery({
+    ...importsQuery,
+    refetchInterval: (q) =>
+      q.state.data?.some((i) => i.state === 'Pending') ? 1500 : false,
+  });
+
+  useEffect(() => {
+    if (!query.data) return;
+    const current = new Map(query.data.map((i) => [i.id, i.state]));
+    if (
+      previousStates.current &&
+      [...previousStates.current].some(
+        ([id, state]) => state === 'Pending' && !current.has(id),
+      )
+    ) {
+      void queryClient.invalidateQueries({ queryKey: allLibraryQueries });
+    }
+    previousStates.current = current;
+  }, [query.data, queryClient]);
+
+  return query;
+}
+
+/** Starts an Import; it's added to the Imports list right away so its row appears before the next poll. */
+export function useStartImport() {
+  const queryClient = useQueryClient();
+  return $api.useMutation('post', '/api/imports', {
+    onSuccess: (started) =>
+      setImports(queryClient, (imports) => [...imports, started]),
+  });
+}
+
+/** Retries a Failed Import; it goes back to Pending in place. */
+export function useRetryImport() {
+  const queryClient = useQueryClient();
+  return $api.useMutation('post', '/api/imports/{id}/retry', {
+    onSuccess: (retried) =>
+      setImports(queryClient, (imports) =>
+        imports.map((i) => (i.id === retried.id ? retried : i)),
+      ),
+  });
+}
+
+/** Dismisses a Failed Import, removing its row. */
+export function useDismissImport() {
+  const queryClient = useQueryClient();
+  return $api.useMutation('delete', '/api/imports/{id}', {
+    onSuccess: (_data, { params }) =>
+      setImports(queryClient, (imports) =>
+        imports.filter((i) => i.id !== params.path.id),
+      ),
   });
 }

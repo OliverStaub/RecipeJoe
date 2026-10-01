@@ -20,12 +20,8 @@ public sealed class RecipeImageTests
     [TestCleanup]
     public async Task ResetDatabaseAsync() => await _factory.ResetDatabaseAsync();
 
-    private static async Task<int> ImportAsync(HttpClient client, string page)
-    {
-        var response = await client.PostAsJsonAsync("/api/recipes/import", new { url = $"http://fixtures.test/recipes/{page}" });
-        Assert.AreEqual(HttpStatusCode.Created, response.StatusCode, page);
-        return (await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
-    }
+    private static Task<int> ImportAsync(HttpClient client, string page) =>
+        ImportsTestHelper.ImportFixtureAsync(client, page);
 
     [TestMethod]
     [DataRow("apfelkuchen", "apfelkuchen.jpg", "image/jpeg")]
@@ -62,24 +58,10 @@ public sealed class RecipeImageTests
     }
 
     [TestMethod]
-    public async Task The_import_response_points_at_the_image_too()
-    {
-        var response = await _factory.CreateClient().PostAsJsonAsync(
-            "/api/recipes/import",
-            new { url = "http://fixtures.test/recipes/apfelkuchen.html" }
-        );
-
-        var body = await response.Content.ReadFromJsonAsync<JsonElement>();
-        Assert.AreEqual($"/api/recipes/{body.GetProperty("id").GetInt32()}/image", body.GetProperty("imageUrl").GetString());
-    }
-
-    [TestMethod]
     public async Task A_recipe_imported_through_a_redirect_resolves_its_relative_image_against_the_final_page()
     {
         var client = _factory.CreateClient();
-        var response = await client.PostAsJsonAsync("/api/recipes/import", new { url = "http://short.test/apfelkuchen" });
-        Assert.AreEqual(HttpStatusCode.Created, response.StatusCode);
-        var id = (await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
+        var id = await ImportsTestHelper.ImportAsync(client, "http://short.test/apfelkuchen");
 
         var image = await client.GetAsync($"/api/recipes/{id}/image");
 

@@ -43,7 +43,6 @@ if (!isBuildTimeOpenApiGeneration)
 
 app.MapOpenApi();
 app.MapHealthChecks("/health");
-app.MapImportEndpoints();
 app.MapImportsEndpoints();
 app.MapRecipeEndpoints();
 app.MapImageEndpoints();

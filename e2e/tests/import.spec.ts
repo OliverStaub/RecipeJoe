@@ -5,54 +5,60 @@ import { expect, test } from '@playwright/test';
 const fixtureUrl = (page: string, token: string) =>
   `http://fixtures/e2e/${page}?t=${token}`;
 
-// fixme: 'Bildschirm bleibt an' never appears in Chromium/Pixel (Wake Lock request presumably
-// rejected over plain http in headless); passes on WebKit. Needs its own look.
-test.fixme('Import opens the Cook View with the tokenised title', async ({
+// The three browser projects run this file concurrently against one shared backend, so two
+// Imports of the same fixture page render as identical-looking rows (same URL label, no token).
+// The row's `title` attribute carries the full URL, letting a test find its own row regardless.
+const rowFor = (page: import('@playwright/test').Page, url: string) =>
+  page.getByRole('listitem').filter({ has: page.locator(`[title="${url}"]`) });
+
+test('a Web Import shows as a Pending row, then its Recipe appears in the Library', async ({
   page,
 }) => {
   const token = randomUUID();
+  const url = fixtureUrl('recipe.html', token);
   await page.goto('/');
 
   await page.getByRole('button', { name: 'Importieren' }).click();
-  await page
-    .getByRole('textbox', { name: 'Webadresse' })
-    .fill(fixtureUrl('recipe.html', token));
+  await page.getByRole('textbox', { name: 'Webadresse' }).fill(url);
   await page
     .getByRole('dialog')
     .getByRole('button', { name: 'Importieren' })
     .click();
 
+  await expect(page.getByRole('dialog')).toBeHidden();
+  const row = rowFor(page, url);
+  await expect(row).toBeVisible();
+  await expect(row.getByText(/wird|Rezept/)).toBeVisible();
+
+  await expect(row).toBeHidden({ timeout: 10_000 });
   await expect(
-    page.getByRole('heading', { name: `Testrezept ${token}` }),
+    page.getByRole('link', { name: new RegExp(`Testrezept ${token}`) }),
   ).toBeVisible();
-  await expect(page.getByText('500 g Kartoffeln')).toBeVisible();
-  // Wake Lock needs a secure context and browser support; assert only where present.
-  const wakeLockSupported = await page.evaluate(() => 'wakeLock' in navigator);
-  if (wakeLockSupported) {
-    await expect(page.getByText('Bildschirm bleibt an')).toBeVisible();
-  }
-  // The backend downloaded /images/e2e-recipe.jpg from the fixtures site and serves it itself.
-  const image = page.getByRole('img', { name: `Testrezept ${token}` });
-  await expect(image).toBeVisible();
-  await expect
-    .poll(() => image.evaluate((img: HTMLImageElement) => img.naturalWidth))
-    .toBeGreaterThan(0);
 });
 
-test('a page without a Recipe shows its message inline', async ({ page }) => {
+test('a page without a Recipe shows a Failed row with "Verwerfen"', async ({
+  page,
+}) => {
+  const token = randomUUID();
+  const url = fixtureUrl('no-recipe.html', token);
   await page.goto('/');
 
   await page.getByRole('button', { name: 'Importieren' }).click();
-  await page
-    .getByRole('textbox', { name: 'Webadresse' })
-    .fill(fixtureUrl('no-recipe.html', randomUUID()));
+  await page.getByRole('textbox', { name: 'Webadresse' }).fill(url);
   await page
     .getByRole('dialog')
     .getByRole('button', { name: 'Importieren' })
     .click();
 
-  await expect(page.getByText('Import fehlgeschlagen')).toBeVisible();
+  const row = rowFor(page, url);
   await expect(
-    page.getByText('Auf dieser Seite wurde kein Rezept gefunden.'),
-  ).toBeVisible();
+    row.getByText('Auf dieser Seite wurde kein Rezept gefunden.'),
+  ).toBeVisible({ timeout: 10_000 });
+  await expect(
+    row.getByRole('button', { name: 'Erneut versuchen' }),
+  ).toHaveCount(0);
+
+  await row.getByRole('button', { name: 'Verwerfen' }).click();
+
+  await expect(row).toBeHidden();
 });

@@ -1,7 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Loader2Icon } from 'lucide-react';
-import { toast } from 'sonner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
@@ -12,25 +10,22 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { useImportRecipe } from '@/api/recipes';
+import { useStartImport } from '@/api/recipes';
 import { failureMessage, toImportFailure } from './failureMessage';
 
 export function ImportDialog() {
   const [open, setOpen] = useState(false);
   const [url, setUrl] = useState('');
-  const navigate = useNavigate();
-  const { mutate, isPending, error, reset } = useImportRecipe();
+  const { mutate, isPending, error, reset } = useStartImport();
 
   function submit(event: FormEvent) {
     event.preventDefault();
     mutate(
       { body: { url: url.trim() } },
       {
-        onSuccess: (recipe) => {
+        onSuccess: () => {
           setOpen(false);
           setUrl('');
-          toast('Rezept importiert');
-          void navigate(`/recipes/${recipe.id}`);
         },
       },
     );

@@ -4,22 +4,6 @@
  */
 
 export interface paths {
-  '/api/recipes/import': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    post: operations['ImportRecipe'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
   '/api/imports': {
     parameters: {
       query?: never;
@@ -138,19 +122,10 @@ export interface components {
       | 'BadResponse'
       | 'ForbiddenAddress'
       | 'NoRecipe'
-      | 'SaveFailed';
+      | 'SaveFailed'
+      | null;
     /** @enum {unknown} */
     ImportKind: 'Web' | 'Video';
-    ImportProblem: {
-      type: string;
-      title: string;
-      /** Format: int32 */
-      status: number;
-      kind: components['schemas']['ImportFailure'];
-    };
-    ImportRequest: {
-      url: string;
-    };
     ImportsProblem: {
       type: string;
       title: string;
@@ -199,48 +174,6 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
-  ImportRecipe: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['ImportRequest'];
-      };
-    };
-    responses: {
-      /** @description Created */
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['RecipeDto'];
-        };
-      };
-      /** @description Bad Request */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': components['schemas']['ImportProblem'];
-        };
-      };
-      /** @description Unprocessable Entity */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': components['schemas']['ImportProblem'];
-        };
-      };
-    };
-  };
   ListImports: {
     parameters: {
       query?: never;

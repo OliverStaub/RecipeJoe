@@ -1,7 +1,9 @@
 import { HttpError } from '@/api/client';
 import type { components } from '@/api/schema';
 
-export type ImportFailure = components['schemas']['ImportFailure'];
+// The generated schema's enum is `| null` only because the field that carries it (ImportDto.failure)
+// is nullable; the kind itself is never null.
+export type ImportFailure = NonNullable<components['schemas']['ImportFailure']>;
 
 export const importFailures = [
   'InvalidUrl',
@@ -26,6 +28,18 @@ export function toImportFailure(error: unknown): ImportFailure {
     }
   }
   return error instanceof TypeError ? 'Unreachable' : 'BadResponse';
+}
+
+const retryableKinds = [
+  'Unreachable',
+  'Blocked',
+  'BadResponse',
+  'SaveFailed',
+] as const satisfies readonly ImportFailure[];
+
+/** Whether "Erneut versuchen" is offered: only for kinds where a retry could plausibly help. */
+export function isRetryable(kind: ImportFailure): boolean {
+  return (retryableKinds as readonly string[]).includes(kind);
 }
 
 export function failureMessage(kind: ImportFailure): string {
