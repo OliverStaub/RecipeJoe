@@ -55,6 +55,128 @@
         }
       }
     },
+    "/api/imports": {
+      "post": {
+        "tags": [
+          "ImportsEndpoints"
+        ],
+        "operationId": "StartImport",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartImportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportsProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "ImportsEndpoints"
+        ],
+        "operationId": "ListImports",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ImportDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/imports/{id}/retry": {
+      "post": {
+        "tags": [
+          "ImportsEndpoints"
+        ],
+        "operationId": "RetryImport",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/api/imports/{id}": {
+      "delete": {
+        "tags": [
+          "ImportsEndpoints"
+        ],
+        "operationId": "DismissImport",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
     "/api/recipes": {
       "get": {
         "tags": [
@@ -202,6 +324,52 @@
   },
   "components": {
     "schemas": {
+      "ImportDto": {
+        "required": [
+          "id",
+          "url",
+          "kind",
+          "state",
+          "stage",
+          "failure"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "url": {
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/ImportKind"
+          },
+          "state": {
+            "$ref": "#/components/schemas/ImportState"
+          },
+          "stage": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ImportStage"
+              }
+            ]
+          },
+          "failure": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ImportFailure"
+              }
+            ]
+          }
+        }
+      },
       "ImportFailure": {
         "enum": [
           "InvalidUrl",
@@ -210,7 +378,14 @@
           "NotFound",
           "BadResponse",
           "ForbiddenAddress",
-          "NoRecipe"
+          "NoRecipe",
+          "SaveFailed"
+        ]
+      },
+      "ImportKind": {
+        "enum": [
+          "Web",
+          "Video"
         ]
       },
       "ImportProblem": {
@@ -247,6 +422,44 @@
             "type": "string"
           }
         }
+      },
+      "ImportsProblem": {
+        "required": [
+          "type",
+          "title",
+          "status",
+          "kind"
+        ],
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/ImportFailure"
+          }
+        }
+      },
+      "ImportStage": {
+        "enum": [
+          "Fetching",
+          "Extracting",
+          "Saving",
+          null
+        ]
+      },
+      "ImportState": {
+        "enum": [
+          "Pending",
+          "Failed"
+        ]
       },
       "RecipeDto": {
         "required": [
@@ -348,12 +561,26 @@
             "type": "boolean"
           }
         }
+      },
+      "StartImportRequest": {
+        "required": [
+          "url"
+        ],
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string"
+          }
+        }
       }
     }
   },
   "tags": [
     {
       "name": "ImportEndpoints"
+    },
+    {
+      "name": "ImportsEndpoints"
     },
     {
       "name": "RecipeJoe.Api"

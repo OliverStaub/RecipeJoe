@@ -9,4 +9,7 @@ internal sealed class ImportOptions
     public TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(10);
 
     public int MaxBytes { get; set; } = 5 * 1024 * 1024;
+
+    /// <summary>How many Imports <see cref="Imports.ImportRunner"/> runs at once.</summary>
+    public int MaxConcurrent { get; set; } = 2;
 }

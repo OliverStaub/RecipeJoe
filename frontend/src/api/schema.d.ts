@@ -20,6 +20,54 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/imports': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['ListImports'];
+    put?: never;
+    post: operations['StartImport'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/imports/{id}/retry': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['RetryImport'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/imports/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete: operations['DismissImport'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/recipes': {
     parameters: {
       query?: never;
@@ -72,6 +120,15 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
   schemas: {
+    ImportDto: {
+      /** Format: uuid */
+      id: string;
+      url: string;
+      kind: components['schemas']['ImportKind'];
+      state: components['schemas']['ImportState'];
+      stage: null | components['schemas']['ImportStage'];
+      failure: null | components['schemas']['ImportFailure'];
+    };
     /** @enum {unknown} */
     ImportFailure:
       | 'InvalidUrl'
@@ -80,7 +137,10 @@ export interface components {
       | 'NotFound'
       | 'BadResponse'
       | 'ForbiddenAddress'
-      | 'NoRecipe';
+      | 'NoRecipe'
+      | 'SaveFailed';
+    /** @enum {unknown} */
+    ImportKind: 'Web' | 'Video';
     ImportProblem: {
       type: string;
       title: string;
@@ -91,6 +151,17 @@ export interface components {
     ImportRequest: {
       url: string;
     };
+    ImportsProblem: {
+      type: string;
+      title: string;
+      /** Format: int32 */
+      status: number;
+      kind: components['schemas']['ImportFailure'];
+    };
+    /** @enum {unknown} */
+    ImportStage: 'Fetching' | 'Extracting' | 'Saving' | null;
+    /** @enum {unknown} */
+    ImportState: 'Pending' | 'Failed';
     RecipeDto: {
       /** Format: int32 */
       id: number;
@@ -115,6 +186,9 @@ export interface components {
       title: string;
       sourceUrl: string;
       hasImage: boolean;
+    };
+    StartImportRequest: {
+      url: string;
     };
   };
   responses: never;
@@ -164,6 +238,115 @@ export interface operations {
         content: {
           'application/problem+json': components['schemas']['ImportProblem'];
         };
+      };
+    };
+  };
+  ListImports: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ImportDto'][];
+        };
+      };
+    };
+  };
+  StartImport: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['StartImportRequest'];
+      };
+    };
+    responses: {
+      /** @description Accepted */
+      202: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ImportDto'];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ImportsProblem'];
+        };
+      };
+    };
+  };
+  RetryImport: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Accepted */
+      202: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ImportDto'];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  DismissImport: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description No Content */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
       };
     };
   };

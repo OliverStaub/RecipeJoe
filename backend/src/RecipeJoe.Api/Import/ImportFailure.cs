@@ -10,4 +10,7 @@ internal enum ImportFailure
     BadResponse,
     ForbiddenAddress,
     NoRecipe,
+
+    /// <summary>An Import produced Recipe Drafts but none of them could be saved.</summary>
+    SaveFailed,
 }

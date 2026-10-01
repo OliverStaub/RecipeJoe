@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using RecipeJoe.Api;
 using RecipeJoe.Api.Images;
 using RecipeJoe.Api.Import;
+using RecipeJoe.Api.Imports;
 using RecipeJoe.Api.Recipes;
 
 var isBuildTimeOpenApiGeneration = Assembly.GetEntryAssembly()?.GetName().Name == "GetDocument.Insider";
@@ -24,6 +25,7 @@ builder.Services.AddDbContext<RecipeJoeDbContext>(options =>
 builder.Services.AddLibrary();
 builder.Services.AddImages();
 builder.Services.AddImport();
+builder.Services.AddImports();
 
 builder.Services.AddOpenApi();
 
@@ -42,6 +44,7 @@ if (!isBuildTimeOpenApiGeneration)
 app.MapOpenApi();
 app.MapHealthChecks("/health");
 app.MapImportEndpoints();
+app.MapImportsEndpoints();
 app.MapRecipeEndpoints();
 app.MapImageEndpoints();
 

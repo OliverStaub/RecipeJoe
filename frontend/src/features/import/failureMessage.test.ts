@@ -19,6 +19,10 @@ const cases: [ImportFailure, string][] = [
   ['BadResponse', 'Die Seite hat etwas geliefert, das wir nicht lesen können.'],
   ['ForbiddenAddress', 'Diese Adresse ist nicht erlaubt.'],
   ['NoRecipe', 'Auf dieser Seite wurde kein Rezept gefunden.'],
+  [
+    'SaveFailed',
+    'Das Rezept konnte nicht gespeichert werden. Versuch es nochmal.',
+  ],
 ];
 
 it.each(cases)('maps %s to its German message', (kind, message) => {

@@ -25,8 +25,14 @@ The URL a Recipe was Imported from. Recipes entered by hand have no Source.
 _Avoid_: Origin, URL
 
 **Import**:
-Fetching a page at a URL, parsing its embedded schema.org/Recipe structured data, and creating a Recipe from it. Only understands standard structured data — never bespoke per-site scraping.
-_Avoid_: Scrape, Ingest
+Creating one or more Recipes from a Source URL. Comes in two kinds, Web Import and Video Import, which follow different paths but end the same way: Recipes in the Library. An Import runs in the background: it is Pending (at some stage) until it ends; on success it disappears, leaving its Recipes; on failure it stays Failed until retried or dismissed.
+_Avoid_: Scrape, Ingest, Import Job
+
+**Web Import**:
+An Import from a web page, parsing its embedded schema.org/Recipe structured data. Only understands standard structured data — never bespoke per-site scraping. Produces exactly one Recipe.
+
+**Video Import**:
+An Import from a YouTube video, reading the video's available text (transcript, title, description) and thumbnail, and turning it into Recipes written as proper German recipes. One video may yield several Recipes.
 
 **Recipe Draft**:
 A Recipe that is not yet in the Library, e.g. what an Import produces. Saving it adds it to the Library. After a redirect, its Source is the page the Recipe was actually found on.
@@ -35,6 +41,10 @@ _Avoid_: Parsed recipe, Candidate
 **Library**:
 The full set of a user's saved Recipes — what the searchable list screen shows.
 _Avoid_: Collection, Catalog
+
+**New Recipe**:
+A Recipe an Import added to the Library that hasn't been opened in Cook View yet. Opening it once makes it an ordinary Recipe.
+_Avoid_: Unread, Unseen
 
 **Cook View**:
 The Recipe detail screen, laid out for reading a Recipe step-by-step while actively cooking.

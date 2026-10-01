@@ -11,6 +11,7 @@ export const importFailures = [
   'BadResponse',
   'ForbiddenAddress',
   'NoRecipe',
+  'SaveFailed',
 ] as const satisfies readonly ImportFailure[];
 
 const kinds: readonly string[] = importFailures;
@@ -43,5 +44,7 @@ export function failureMessage(kind: ImportFailure): string {
       return 'Diese Adresse ist nicht erlaubt.';
     case 'NoRecipe':
       return 'Auf dieser Seite wurde kein Rezept gefunden.';
+    case 'SaveFailed':
+      return 'Das Rezept konnte nicht gespeichert werden. Versuch es nochmal.';
   }
 }
