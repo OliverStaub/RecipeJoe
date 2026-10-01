@@ -11,6 +11,9 @@ export const importFailures = [
   'BadResponse',
   'ForbiddenAddress',
   'NoRecipe',
+  'NoCaptions',
+  'LlmUnavailable',
+  'LlmBadOutput',
   'SaveFailed',
 ] as const satisfies readonly ImportFailure[];
 
@@ -44,6 +47,12 @@ export function failureMessage(kind: ImportFailure): string {
       return 'Diese Adresse ist nicht erlaubt.';
     case 'NoRecipe':
       return 'Auf dieser Seite wurde kein Rezept gefunden.';
+    case 'NoCaptions':
+      return 'Dieses Video hat keine Untertitel, daraus kann kein Rezept gelesen werden.';
+    case 'LlmUnavailable':
+      return 'Der LLM-Provider ist nicht erreichbar.';
+    case 'LlmBadOutput':
+      return 'Die KI hat keine brauchbare Antwort geliefert. Versuch es nochmal.';
     case 'SaveFailed':
       return 'Das Rezept konnte nicht gespeichert werden. Versuch es nochmal.';
   }

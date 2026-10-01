@@ -138,6 +138,9 @@ export interface components {
       | 'BadResponse'
       | 'ForbiddenAddress'
       | 'NoRecipe'
+      | 'NoCaptions'
+      | 'LlmUnavailable'
+      | 'LlmBadOutput'
       | 'SaveFailed';
     /** @enum {unknown} */
     ImportKind: 'Web' | 'Video';

@@ -11,6 +11,15 @@ internal enum ImportFailure
     ForbiddenAddress,
     NoRecipe,
 
+    /// <summary>The video has no caption tracks to read a Recipe from.</summary>
+    NoCaptions,
+
+    /// <summary>The LLM provider couldn't be reached, timed out or rejected the request. Details only in logs.</summary>
+    LlmUnavailable,
+
+    /// <summary>The LLM answered, but nothing usable came out of it.</summary>
+    LlmBadOutput,
+
     /// <summary>An Import produced Recipe Drafts but none of them could be saved.</summary>
     SaveFailed,
 }

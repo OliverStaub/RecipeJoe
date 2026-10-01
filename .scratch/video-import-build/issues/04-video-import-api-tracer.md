@@ -6,7 +6,7 @@
 
 **Blocked by:** 01
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [ ] Video source seam: URL → video text (title, description, transcript) + thumbnail URL | typed failure; `Fake` adapter reads recorded JSON in our own shape, selected by `VideoSource:Provider=Fake`
 - [ ] YouTube URLs (watch, youtu.be, /shorts/) pick the Video path and Import kind `Video`; all others pick Web

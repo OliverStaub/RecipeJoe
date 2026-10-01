@@ -1,5 +1,6 @@
 using System.Threading.Channels;
 using RecipeJoe.Api.Import;
+using RecipeJoe.Api.Video;
 
 namespace RecipeJoe.Api.Imports;
 
@@ -16,8 +17,8 @@ internal sealed class ImportService(ImportStore store, ChannelWriter<Guid> queue
             return Result<Import, ImportFailure>.Fail(ImportFailure.InvalidUrl);
         }
 
-        // Every Import is a Web Import until the Video path exists (ticket 04); only then does this classify by URL.
-        var import = store.Start(parsed, ImportKind.Web);
+        var kind = YouTubeUrl.TryGetVideoId(parsed) is null ? ImportKind.Web : ImportKind.Video;
+        var import = store.Start(parsed, kind);
         queue.TryWrite(import.Id);
         return Result<Import, ImportFailure>.Ok(import);
     }

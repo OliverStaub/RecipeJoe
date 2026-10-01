@@ -3,6 +3,8 @@
   <ItemGroup>
     <PackageReference Include="AngleSharp" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Microsoft.Extensions.AI" />
+    <PackageReference Include="Microsoft.Extensions.AI.OpenAI" />
     <PackageReference Include="Microsoft.Extensions.ApiDescription.Server" PrivateAssets="all" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
@@ -14,6 +16,10 @@
     <OpenApiDocumentsDirectory>$(MSBuildProjectDirectory)/../..</OpenApiDocumentsDirectory>
     <OpenApiGenerateDocumentsOptions>--file-name openapi</OpenApiGenerateDocumentsOptions>
   </PropertyGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Video/RecipeExtractionPrompt.md" LogicalName="RecipeExtractionPrompt.md" />
+  </ItemGroup>
 
   <ItemGroup>
     <InternalsVisibleTo Include="RecipeJoe.UnitTests" />
