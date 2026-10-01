@@ -46,6 +46,13 @@ services:
     profiles: [app]
     build:
       context: ./backend
+    # .env carries the optional Llm__* overrides and the OpenRouter key; not used in CI.
+    env_file:
+      - path: .env
+        required: false
+    # Host Ollama stays bound to 127.0.0.1; this name reaches it via the host gateway.
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
     environment:
       ConnectionStrings__Db: Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
     ports:
