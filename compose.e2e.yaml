@@ -5,12 +5,32 @@ services:
     ports: !reset []
   fixtures:
     ports: !reset []
+  # Stands in for OpenRouter: answers every chat request with one Recipe titled like the video.
+  llm:
+    image: wiremock/wiremock:3.13.1
+    volumes:
+      - ./docker/wiremock/mappings:/home/wiremock/mappings:ro
+    healthcheck:
+      test: ['CMD', 'curl', '-fsS', 'http://127.0.0.1:8080/__admin/health']
+      interval: 2s
+      timeout: 3s
+      retries: 15
   backend:
     environment:
       # Reachable as http://fixtures (port 80 inside the compose network); exempt from the SSRF guard.
       Import__AllowedHosts__0: fixtures
+      # No YouTube, no paid calls: recorded videos in, WireMock as the LLM.
+      VideoSource__Provider: Fake
+      VideoSource__FakeDirectory: /fixtures/videos
+      Llm__Provider: OpenRouter
+      Llm__BaseUrl: http://llm:8080/v1
+      Llm__ApiKey: e2e-not-a-secret
+    volumes:
+      - ./fixtures/e2e/videos:/fixtures/videos:ro
     depends_on:
       fixtures:
+        condition: service_healthy
+      llm:
         condition: service_healthy
     ports: !reset []
   web:

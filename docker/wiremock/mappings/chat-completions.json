@@ -1,0 +1,9 @@
+{
+  "request": { "method": "POST", "urlPath": "/v1/chat/completions" },
+  "response": {
+    "status": 200,
+    "headers": { "Content-Type": "application/json" },
+    "body": "{\"id\":\"chatcmpl-e2e\",\"object\":\"chat.completion\",\"created\":0,\"model\":\"e2e\",\"choices\":[{\"index\":0,\"finish_reason\":\"stop\",\"message\":{\"role\":\"assistant\",\"content\":\"{\\\"recipes\\\":[{\\\"title\\\":\\\"{{regexExtract request.body '(?<=Titel: )[^\\\\\\\\]+'}}\\\",\\\"ingredientLines\\\":[\\\"500 g Äpfel\\\"],\\\"steps\\\":[\\\"Backen\\\"]}]}\"}}]}",
+    "transformers": ["response-template"]
+  }
+}

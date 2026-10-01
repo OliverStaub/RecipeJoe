@@ -181,3 +181,12 @@ it('offers a close button, except while starting', async () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument(),
   );
 });
+
+it('invites to paste a Web address or a YouTube link', async () => {
+  await openDialog();
+
+  expect(urlInput()).toHaveAttribute(
+    'placeholder',
+    'Webadresse oder YouTube-Link',
+  );
+});

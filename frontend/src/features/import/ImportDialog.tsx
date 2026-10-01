@@ -50,7 +50,7 @@ export function ImportDialog() {
             type="text"
             inputMode="url"
             aria-label="Webadresse"
-            placeholder="https://…"
+            placeholder="Webadresse oder YouTube-Link"
             value={url}
             disabled={isPending}
             onChange={(e) => {

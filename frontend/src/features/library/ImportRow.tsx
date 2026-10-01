@@ -1,4 +1,9 @@
-import { CircleAlertIcon, GlobeIcon, Loader2Icon } from 'lucide-react';
+import {
+  CircleAlertIcon,
+  GlobeIcon,
+  Loader2Icon,
+  VideoIcon,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { components } from '@/api/schema';
@@ -12,6 +17,7 @@ type Import = components['schemas']['ImportDto'];
 export function ImportRow({ importDto }: { importDto: Import }) {
   const { mutate: retry, isPending: isRetrying } = useRetryImport();
   const { mutate: dismiss, isPending: isDismissing } = useDismissImport();
+  const KindIcon = importDto.kind === 'Video' ? VideoIcon : GlobeIcon;
 
   return (
     <li className="flex items-center gap-1">
@@ -19,7 +25,7 @@ export function ImportRow({ importDto }: { importDto: Import }) {
         {importDto.state === 'Pending' ? (
           <span className="relative flex size-14 shrink-0 items-center justify-center">
             <Skeleton className="absolute inset-0" />
-            <GlobeIcon aria-hidden className="relative text-muted-foreground" />
+            <KindIcon aria-hidden className="relative text-muted-foreground" />
           </span>
         ) : (
           <span className="flex size-14 shrink-0 items-center justify-center rounded-md bg-destructive/10 text-destructive">
@@ -33,7 +39,7 @@ export function ImportRow({ importDto }: { importDto: Import }) {
           {importDto.state === 'Pending' ? (
             <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
               <Loader2Icon aria-hidden className="size-3.5 animate-spin" />
-              {stageLabel(importDto.stage ?? 'Fetching')}
+              {stageLabel(importDto.stage ?? 'Fetching', importDto.kind)}
             </span>
           ) : (
             <span className="block text-sm text-destructive">

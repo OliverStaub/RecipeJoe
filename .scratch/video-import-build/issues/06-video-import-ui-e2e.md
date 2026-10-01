@@ -6,12 +6,12 @@
 
 **Blocked by:** 02, 04
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Dialog placeholder "Webadresse oder YouTube-Link"
-- [ ] Pending row for a Video Import: video icon; "Video wird geladen…" / "Rezept wird geschrieben…" / "Wird gespeichert…"
-- [ ] `compose.e2e.yaml`: a WireMock container as the OpenRouter stub (`Llm:Provider=OpenRouter`, `Llm:BaseUrl` points at it), its response template echoes the video title from the request; backend uses `VideoSource:Provider=Fake` with E2E fixture videos
-- [ ] Route-level tests: video icon + Video stage labels; N Recipes appear when the Import vanishes
-- [ ] E2E: paste YouTube link → video row → Recipe(s) with the unique title in the Library with the video as Source
-- [ ] CI runs the new E2E without secrets or external calls
-- [ ] Coverage gate passes
+- [x] Dialog placeholder "Webadresse oder YouTube-Link"
+- [x] Pending row for a Video Import: video icon; "Video wird geladen…" / "Rezept wird geschrieben…" / "Wird gespeichert…"
+- [x] `compose.e2e.yaml`: a WireMock container as the OpenRouter stub (`Llm:Provider=OpenRouter`, `Llm:BaseUrl` points at it), its response template echoes the video title from the request; backend uses `VideoSource:Provider=Fake` with E2E fixture videos
+- [x] Route-level tests: video icon + Video stage labels; N Recipes appear when the Import vanishes
+- [x] E2E: paste YouTube link → video row → Recipe(s) with the unique title in the Library with the video as Source
+- [x] CI runs the new E2E without secrets or external calls
+- [x] Coverage gate passes

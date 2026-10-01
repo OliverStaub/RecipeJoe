@@ -396,3 +396,60 @@ it('shows a Recipe once its Import vanishes from the list', async () => {
     await screen.findByRole('link', { name: /Kartoffelsuppe/ }),
   ).toBeInTheDocument();
 });
+
+it('shows a Pending Video Import with a video icon and Video stage labels', async () => {
+  const videoImport = {
+    ...pendingImport,
+    kind: 'Video',
+    url: 'https://www.youtube.com/watch?v=abc',
+    stage: 'Extracting',
+  } as const;
+  server.use(
+    http.get('/api/recipes', ({ response }) => response(200).json([])),
+    http.get('/api/imports', ({ response }) =>
+      response(200).json([videoImport, pendingImport]),
+    ),
+  );
+  renderApp();
+  await screen.findByText('youtube.com/watch');
+
+  const video = importRow('youtube.com/watch');
+  within(video).getByText('Rezept wird geschrieben…');
+  expect(video.querySelector('.lucide-video')).not.toBeNull();
+  expect(video.querySelector('.lucide-globe')).toBeNull();
+
+  const web = importRow('x.test/recipes/a');
+  within(web).getByText('Rezept wird gelesen…');
+  expect(web.querySelector('.lucide-globe')).not.toBeNull();
+});
+
+it("shows all of a Video Import's Recipes together once its Import vanishes", async () => {
+  let imports: Import[] = [
+    {
+      ...pendingImport,
+      kind: 'Video',
+      url: 'https://www.youtube.com/watch?v=abc',
+    },
+  ];
+  let recipes: RecipeSummary[] = [];
+  server.use(
+    http.get('/api/recipes', ({ response }) => response(200).json(recipes)),
+    http.get('/api/imports', ({ response }) => response(200).json(imports)),
+  );
+  renderApp();
+  await screen.findByText('youtube.com/watch');
+
+  imports = [];
+  recipes = [
+    { ...summary, id: 7, title: 'Apfelkuchen' },
+    { ...summary, id: 8, title: 'Birnenkuchen' },
+  ];
+
+  expect(
+    await screen.findByRole('link', { name: /Apfelkuchen/ }, { timeout: 3000 }),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByRole('link', { name: /Birnenkuchen/ }),
+  ).toBeInTheDocument();
+  expect(screen.queryByText('youtube.com/watch')).not.toBeInTheDocument();
+});
