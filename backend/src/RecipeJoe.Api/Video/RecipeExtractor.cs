@@ -58,6 +58,11 @@ internal sealed partial class RecipeExtractor(IChatClient chat, IOptions<LlmOpti
             LogBadReply(ex.Message);
             return Fail(ImportFailure.LlmBadOutput);
         }
+        catch (Exception ex) when (ex is not OperationCanceledException && FindProviderError(ex) is { } providerError)
+        {
+            LogProviderError(providerError.Provider ?? "unknown", providerError.Message);
+            return Fail(ImportFailure.LlmUnavailable);
+        }
         catch (Exception ex) when (ex is not OperationCanceledException && IsContextOverflow(ex))
         {
             LogContextOverflow(ex.Message);
@@ -88,6 +93,19 @@ internal sealed partial class RecipeExtractor(IChatClient chat, IOptions<LlmOpti
         }
 
         return valid.Count == 0 ? Fail(ImportFailure.LlmBadOutput) : Result<IReadOnlyList<ParsedRecipe>, ImportFailure>.Ok(valid);
+    }
+
+    private static ProviderErrorException? FindProviderError(Exception exception)
+    {
+        for (var e = exception; e is not null; e = e.InnerException)
+        {
+            if (e is ProviderErrorException found)
+            {
+                return found;
+            }
+        }
+
+        return null;
     }
 
     /// <summary>OpenRouter words a context overflow as "maximum context length". Matched loosely: the overflow reply is documented, not reproduced.</summary>
@@ -166,6 +184,9 @@ internal sealed partial class RecipeExtractor(IChatClient chat, IOptions<LlmOpti
 
     [LoggerMessage(LogLevel.Warning, "Video text exceeds the LLM context window: {Message}")]
     private partial void LogContextOverflow(string message);
+
+    [LoggerMessage(LogLevel.Warning, "LLM provider {Provider} reported an error: {Message}")]
+    private partial void LogProviderError(string provider, string message);
 
     [LoggerMessage(LogLevel.Warning, "LLM provider call failed")]
     private partial void LogProviderFailed(Exception exception);

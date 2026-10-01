@@ -9,6 +9,9 @@ namespace RecipeJoe.Api.Video;
 /// <summary>Builds the <see cref="IChatClient"/> for <see cref="LlmOptions.Provider"/>. SDK retries are off: the cook retries a failed Import.</summary>
 internal static class LlmClientFactory
 {
+    /// <summary>One connection pool for all clients (and so no per-Create handler to dispose).</summary>
+    private static readonly HttpClient SharedHttp = new(new ProviderErrorHandler(new HttpClientHandler())) { Timeout = Timeout.InfiniteTimeSpan };
+
     public static IChatClient Create(LlmOptions options) =>
         options.Provider switch
         {
@@ -26,6 +29,8 @@ internal static class LlmClientFactory
                 RetryPolicy = new ClientRetryPolicy(maxRetries: 0),
                 // The extractor owns the timeout; the SDK's 100 s default would cut a long generation short.
                 NetworkTimeout = options.Timeout + TimeSpan.FromSeconds(10),
+                // The SDK's own timeout (above) governs; HttpClient's 100 s default must not cut in first.
+                Transport = new HttpClientPipelineTransport(SharedHttp),
             }
         );
 
