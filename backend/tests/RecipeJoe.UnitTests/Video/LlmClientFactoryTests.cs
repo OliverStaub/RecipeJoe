@@ -54,6 +54,29 @@ public sealed class LlmClientFactoryTests
         Assert.AreEqual("json_schema", format.GetProperty("type").GetString());
         Assert.IsTrue(format.GetProperty("json_schema").GetProperty("strict").GetBoolean());
         Assert.IsTrue(request.RootElement.GetProperty("provider").GetProperty("require_parameters").GetBoolean());
+        AssertStrictObjects(format.GetProperty("json_schema").GetProperty("schema"));
+    }
+
+    /// <summary>Strict mode needs every object closed (<c>additionalProperties: false</c>) with all its properties required.</summary>
+    private static void AssertStrictObjects(JsonElement node)
+    {
+        switch (node.ValueKind)
+        {
+            case JsonValueKind.Object:
+                if (node.TryGetProperty("properties", out var properties))
+                {
+                    Assert.IsTrue(node.TryGetProperty("additionalProperties", out var closed) && closed.ValueKind == JsonValueKind.False, "object must forbid additional properties");
+                    var required = node.GetProperty("required").EnumerateArray().Select(r => r.GetString()).ToHashSet();
+                    CollectionAssert.AreEquivalent(properties.EnumerateObject().Select(p => p.Name).ToList(), required.ToList());
+                }
+                foreach (var child in node.EnumerateObject())
+                    AssertStrictObjects(child.Value);
+                break;
+            case JsonValueKind.Array:
+                foreach (var item in node.EnumerateArray())
+                    AssertStrictObjects(item);
+                break;
+        }
     }
 
     private static int FreePort()
