@@ -205,6 +205,7 @@ it('lists the imported Recipe back in the Library', async () => {
           title: 'Kartoffelsuppe',
           sourceUrl: 'http://x.test/a',
           hasImage: false,
+          isNew: false,
         },
       ];
       return response(201).json(recipe);

@@ -20,6 +20,9 @@ internal sealed class Recipe
 
     public DateTimeOffset CreatedAt { get; set; }
 
+    /// <summary>Null until the Recipe is first opened in Cook View; a New Recipe shows "Neu" in the Library.</summary>
+    public DateTimeOffset? SeenAt { get; set; }
+
     public List<IngredientLine> IngredientLines { get; } = [];
 
     public List<Step> Steps { get; } = [];

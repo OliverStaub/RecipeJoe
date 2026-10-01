@@ -186,6 +186,7 @@ export interface components {
       title: string;
       sourceUrl: string;
       hasImage: boolean;
+      isNew: boolean;
     };
     StartImportRequest: {
       url: string;

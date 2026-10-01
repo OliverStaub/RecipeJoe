@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChefHatIcon, MoreVerticalIcon, SearchIcon } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -84,8 +85,13 @@ export function LibraryPage() {
                 </span>
               )}
               <span className="min-w-0">
-                <span className="block truncate font-medium">
-                  {recipe.title}
+                <span className="flex items-center gap-2">
+                  <span className="truncate font-medium">{recipe.title}</span>
+                  {recipe.isNew && (
+                    <Badge variant="secondary" className="shrink-0">
+                      Neu
+                    </Badge>
+                  )}
                 </span>
                 <span className="block truncate text-sm text-muted-foreground">
                   {sourceHost(recipe.sourceUrl)}

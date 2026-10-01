@@ -45,18 +45,26 @@ internal sealed class Library(RecipeJoeDbContext db, TimeProvider timeProvider)
         return await recipes
             .OrderByDescending(r => r.CreatedAt)
             .ThenByDescending(r => r.Id)
-            .Select(r => new RecipeSummaryDto(r.Id, r.Title, r.SourceUrl, r.Image != null))
+            .Select(r => new RecipeSummaryDto(r.Id, r.Title, r.SourceUrl, r.Image != null, r.SeenAt == null))
             .ToListAsync(cancellationToken);
     }
 
+    /// <summary>Marks the Recipe seen the first time it's fetched, clearing its "Neu" mark in the Library.</summary>
     public async Task<RecipeDto?> GetAsync(int id, CancellationToken cancellationToken)
     {
         var found = await db
-            .Recipes.AsNoTracking()
-            .Where(r => r.Id == id)
+            .Recipes.Where(r => r.Id == id)
             .Select(r => new { Recipe = r, HasImage = r.Image != null })
             .FirstOrDefaultAsync(cancellationToken);
-        return found is null ? null : RecipeDto.From(found.Recipe, found.HasImage);
+        if (found is null) return null;
+
+        if (found.Recipe.SeenAt is null)
+        {
+            found.Recipe.SeenAt = timeProvider.GetUtcNow();
+            await db.SaveChangesAsync(cancellationToken);
+        }
+
+        return RecipeDto.From(found.Recipe, found.HasImage);
     }
 
     /// <summary>False when there is no such Recipe. Lines, Steps and the image cascade in the database.</summary>
