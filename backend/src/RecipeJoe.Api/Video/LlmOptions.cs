@@ -35,7 +35,7 @@ internal sealed class LlmOptions
     public string ResolvedModel =>
         Model ?? Provider switch
         {
-            LlmProvider.OpenRouter => "deepseek/deepseek-v4-flash",
+            LlmProvider.OpenRouter => "mistralai/ministral-3b-2512",
             _ => throw new NotSupportedException($"LLM provider {Provider} has no default model."),
         };
 
