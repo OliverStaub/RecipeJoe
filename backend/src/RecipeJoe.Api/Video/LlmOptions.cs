@@ -35,7 +35,7 @@ internal sealed class LlmOptions
     public string ResolvedModel =>
         Model ?? Provider switch
         {
-            LlmProvider.OpenRouter => "mistralai/ministral-3b-2512",
+            LlmProvider.OpenRouter => "mistralai/mistral-medium-3-5",
             _ => throw new NotSupportedException($"LLM provider {Provider} has no default model."),
         };
 

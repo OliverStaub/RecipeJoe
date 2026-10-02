@@ -26,7 +26,7 @@ public sealed class LlmOptionsValidatorTests
 
         options.ApiKey = "sk-test";
         Assert.IsTrue(IsValid(options));
-        Assert.AreEqual("mistralai/ministral-3b-2512", options.ResolvedModel);
+        Assert.AreEqual("mistralai/mistral-medium-3-5", options.ResolvedModel);
         Assert.AreEqual(new Uri("https://openrouter.ai/api/v1"), options.ResolvedBaseUrl);
     }
 
