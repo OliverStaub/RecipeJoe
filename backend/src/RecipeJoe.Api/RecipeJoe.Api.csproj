@@ -13,6 +13,8 @@
   </ItemGroup>
 
   <PropertyGroup>
+    <!-- OpenAI SDK's JsonPatch is its only view of fields it does not model (provider, cost). Project-wide, not #pragma: Stryker's rewrite moves code out of pragma scope. -->
+    <NoWarn>$(NoWarn);SCME0001</NoWarn>
     <OpenApiGenerateDocumentsOnBuild>true</OpenApiGenerateDocumentsOnBuild>
     <OpenApiDocumentsDirectory>$(MSBuildProjectDirectory)/../..</OpenApiDocumentsDirectory>
     <OpenApiGenerateDocumentsOptions>--file-name openapi</OpenApiGenerateDocumentsOptions>

@@ -23,17 +23,13 @@ internal static class LlmClientFactory
     /// <summary>The upstream provider OpenRouter reports in the reply's top-level <c>provider</c> field, or null when unknown.</summary>
     public static string? ServingProvider(ChatResponse response)
     {
-#pragma warning disable SCME0001 // JsonPatch is the SDK's only view of fields it does not model.
         return response.RawRepresentation is ChatCompletion completion && completion.Patch.TryGetValue("$.provider"u8, out string? provider) ? provider : null;
-#pragma warning restore SCME0001
     }
 
     /// <summary>What OpenRouter charged for the call in USD (the reply's <c>usage.cost</c>), or null when the reply doesn't say.</summary>
     public static decimal? Cost(ChatResponse response)
     {
-#pragma warning disable SCME0001 // JsonPatch is the SDK's only view of fields it does not model.
         return response.RawRepresentation is ChatCompletion { Usage: { } usage } && usage.Patch.TryGetValue("$.cost"u8, out decimal cost) ? cost : null;
-#pragma warning restore SCME0001
     }
 
     private static RequireParametersChatClient CreateOpenRouter(LlmOptions options)
@@ -71,9 +67,7 @@ internal static class LlmClientFactory
             options.RawRepresentationFactory = client =>
             {
                 var raw = previous?.Invoke(client) as ChatCompletionOptions ?? new ChatCompletionOptions();
-#pragma warning disable SCME0001 // JsonPatch is the SDK's only way to add a non-OpenAI request field.
                 raw.Patch.Set("$.provider"u8, BinaryData.FromString(providerPreferences));
-#pragma warning restore SCME0001
                 return raw;
             };
 

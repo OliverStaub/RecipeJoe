@@ -9,6 +9,7 @@
     "!src/test/**",
     "!src/main.tsx"
   ],
-  "reporters": ["clear-text", "progress"],
+  "reporters": ["clear-text", "progress", "html"],
+  "thresholds": { "high": 90, "low": 85, "break": 81 },
   "ignorePatterns": ["dist", "coverage", "reports"]
 }

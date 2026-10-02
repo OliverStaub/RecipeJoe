@@ -1,0 +1,12 @@
+{
+  "stryker-config": {
+    "project": "RecipeJoe.Api.csproj",
+    "test-projects": [
+      "RecipeJoe.UnitTests.csproj",
+      "../RecipeJoe.IntegrationTests/RecipeJoe.IntegrationTests.csproj"
+    ],
+    "concurrency": 2,
+    "reporters": ["cleartext", "progress", "html"],
+    "thresholds": { "high": 60, "low": 50, "break": 45 }
+  }
+}
