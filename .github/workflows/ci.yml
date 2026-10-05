@@ -134,7 +134,8 @@ jobs:
   #         retention-days: 7
 
   e2e:
-    needs: [backend-tests, frontend-tests, mutation]
+    needs: [backend-tests, frontend-tests]
+    # needs: [backend-tests, frontend-tests, mutation]
     # mutation is skipped on feature-branch pushes; still run e2e then.
     if: ${{ !cancelled() && !failure() }}
     runs-on: ubuntu-24.04
