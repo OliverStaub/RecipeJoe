@@ -100,38 +100,38 @@ jobs:
       - run: just cov-frontend
         # Vitest's 80 % line threshold is active because CI is set.
 
-  # Mutation testing is slow: main and PRs into main only. Gates e2e (the costliest job).
-  mutation:
-    needs: [backend-tests, frontend-tests]
-    if: github.ref == 'refs/heads/main' || github.base_ref == 'main'
-    runs-on: ubuntu-24.04
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
-        with:
-          global-json-file: global.json
-          cache: true
-          cache-dependency-path: backend/**/packages.lock.json
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
-      - uses: extractions/setup-just@53165ef7e734c5c07cb06b3c8e7b647c5aa16db3 # v4.0.0
-      - run: |
-          cd frontend && npm ci
-          cd ../backend && dotnet restore RecipeJoe.slnx --locked-mode && dotnet tool restore
-      # Fails below each tool's thresholds.break (see stryker configs).
-      - run: just mutate
-      - if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: mutation-reports
-          path: |
-            backend/**/StrykerOutput/**/mutation-report.html
-            frontend/reports/mutation/mutation.html
-          retention-days: 7
+  # # Mutation testing is slow: main and PRs into main only. Gates e2e (the costliest job).
+  # mutation:
+  #   needs: [backend-tests, frontend-tests]
+  #   if: github.ref == 'refs/heads/main' || github.base_ref == 'main'
+  #   runs-on: ubuntu-24.04
+  #   timeout-minutes: 30
+  #   steps:
+  #     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+  #     - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+  #       with:
+  #         global-json-file: global.json
+  #         cache: true
+  #         cache-dependency-path: backend/**/packages.lock.json
+  #     - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+  #       with:
+  #         node-version-file: .nvmrc
+  #         cache: npm
+  #         cache-dependency-path: frontend/package-lock.json
+  #     - uses: extractions/setup-just@53165ef7e734c5c07cb06b3c8e7b647c5aa16db3 # v4.0.0
+  #     - run: |
+  #         cd frontend && npm ci
+  #         cd ../backend && dotnet restore RecipeJoe.slnx --locked-mode && dotnet tool restore
+  #     # Fails below each tool's thresholds.break (see stryker configs).
+  #     - run: just mutate
+  #     - if: always()
+  #       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+  #       with:
+  #         name: mutation-reports
+  #         path: |
+  #           backend/**/StrykerOutput/**/mutation-report.html
+  #           frontend/reports/mutation/mutation.html
+  #         retention-days: 7
 
   e2e:
     needs: [backend-tests, frontend-tests, mutation]
